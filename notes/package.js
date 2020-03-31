@@ -1,4 +1,4 @@
-// 每个npm包都需要一个package.json文件做描述
+// 1-3 每个npm包都需要一个package.json文件做描述
 const vue = {
   "name": "vue", //npm包名字
   "version": "2.6.11", // 版本
@@ -26,8 +26,8 @@ const vue = {
     "dev:weex:factory": "rollup -w -c scripts/config.js --environment TARGET:weex-factory",
     "dev:weex:compiler": "rollup -w -c scripts/config.js --environment TARGET:weex-compiler ",
     // 构建相关的任务
-      // build web平台
-    "build": "node scripts/build.js", // 通过nodejs执行 scripts/build.js, 代码就在scripts/build.js下
+    // build web平台
+    "build": "node scripts/build.js", // 通过nodejs执行 scripts/build.js, 代码就在scripts/build.js下(详见1-4)
     // build 输出serve-render相关
     "build:ssr": "npm run build -- web-runtime-cjs,web-server-renderer",
     // build 输出weex相关
