@@ -7,7 +7,7 @@ import {
 } from 'shared/util'
 
 import { LIFECYCLE_HOOKS } from 'shared/constants'
-
+// 2-3-5 定义vue全局config
 export type Config = {
   // user
   optionMergeStrategies: { [key: string]: Function };

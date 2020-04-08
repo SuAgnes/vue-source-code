@@ -21,7 +21,7 @@ import {
 export function initGlobalAPI (Vue: GlobalAPI) {
   // config
   const configDef = {}
-  configDef.get = () => config
+  configDef.get = () => config // 2-3-4 configDef来源
   if (process.env.NODE_ENV !== 'production') {
     configDef.set = () => {
       warn(
@@ -29,18 +29,20 @@ export function initGlobalAPI (Vue: GlobalAPI) {
       )
     }
   }
+  // 2-3-3 往vue的config上定义了configDef
   Object.defineProperty(Vue, 'config', configDef)
 
   // exposed util methods.
   // NOTE: these are not considered part of the public API - avoid relying on
   // them unless you are aware of the risk.
+  // 2-4-1 定义了一些util方法 不过vue官方不建议去使用这些util方法，因为内部实现不稳定，有风险（可能会改变实现方法）
   Vue.util = {
     warn,
     extend,
     mergeOptions,
     defineReactive
   }
-
+// 2-4-2 其他方法
   Vue.set = set
   Vue.delete = del
   Vue.nextTick = nextTick
@@ -50,8 +52,10 @@ export function initGlobalAPI (Vue: GlobalAPI) {
     observe(obj)
     return obj
   }
-
+  </T>
+  // 2-4-3 options 其实可以用来合并一些方法
   Vue.options = Object.create(null)
+  // 2-5-1 去shared/constants看ASSET_TYPES
   ASSET_TYPES.forEach(type => {
     Vue.options[type + 's'] = Object.create(null)
   })
@@ -59,11 +63,18 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   // this is used to identify the "base" constructor to extend all plain-object
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue
-
+  // 2-5-2 builtInComponents其实是一个内置组件 详见components/index
+  // 2-5-4 也就是说KeepAlive其实是vue的一个内置组件，通过extend方法扩展到Vue.options.components下面
   extend(Vue.options.components, builtInComponents)
-
-  initUse(Vue)
-  initMixin(Vue)
-  initExtend(Vue)
-  initAssetRegisters(Vue)
+  // 2-5-5
+  initUse(Vue) // 创造Vue.use()方法
+  initMixin(Vue) // 定义全局mixin方法
+  initExtend(Vue) // 定义vue的extend方法
+  initAssetRegisters(Vue) // 把刚刚拿到的方法定义到全局
 }
+
+// 2-6-1 在初始化过程中 vue完成了全局方法的定义，一旦vue把这些方法定义了以后，才可以在代码中使用这些方法。
+// 这些方法不是凭空而来，而是在完成import vue的过程中定义了这些全局方法。
+
+// 2-6-2 vue的初始化过程：1、找到vue的定义。2、然后了解到在Vue下面通过mixin方法给原型挂载了很多原型方法。3、又通过initGlobalApi（global-api/index.js）给vue挂载了很多静态方法。
+// 然后就可以在代码中使用了
