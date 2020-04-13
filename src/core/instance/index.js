@@ -12,7 +12,7 @@ function Vue (options) {
     // 2-2-1 vue必须要通过new的方法去实例它
     warn('Vue is a constructor and should be called with the `new` keyword')
   }
-  this._init(options)
+  this._init(options) // 3-1-1 这个init其实是在initMixin里定义的
 }
 // 2-2-5 每个mixin其实都是往vue的原型上去混入一些方法，不用ES6是因为ES5的写法可以更方便的往原型上挂载很多方法，并且可以把这些方法拆分到不同的文件下（↓例如这些mixin)，方便代码管理
 initMixin(Vue)

@@ -29,12 +29,18 @@ export function initMixin (Vue: Class<Component>) {
     // a flag to avoid this being observed
     vm._isVue = true
     // merge options
+    
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      /* 3-1-2把我们传入的options最后都合并到$options上
+        3-1-3 vm.$options.el 其实就是 new Vue({
+        el：这里的el
+        data: vm.$options.data
+      }) */
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -48,6 +54,7 @@ export function initMixin (Vue: Class<Component>) {
       vm._renderProxy = vm
     }
     // expose real self
+    /* 3-1-4 初始化函数 */
     vm._self = vm
     initLifecycle(vm)
     initEvents(vm)
@@ -64,8 +71,10 @@ export function initMixin (Vue: Class<Component>) {
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
-
+    // 3-1-5 初始化结束 判断有没有el
     if (vm.$options.el) {
+      /* 3-1-6 在mount之后转化为DOM对象（new Vue 传入一个字符串后，通过$mount做挂载。
+       这个函数执行完，dom会立刻发生变化（具体实现可以从vue项目里debugger) */
       vm.$mount(vm.$options.el)
     }
   }

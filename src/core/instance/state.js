@@ -34,7 +34,12 @@ const sharedPropertyDefinition = {
   get: noop,
   set: noop
 }
-
+/* 
+  3-3-1 proxy定义了get和set，然后通过Object.defineProperty这个方法对target, key的访问做了一层get和set
+  target 其实就是vm, 也就是说vm.key.get就会执行proxyGetter()
+  也就是说，当我们去访问vm.data的时候，实际上就会去访问 this[sourceKey][key] (vm._data.key)
+  不过不建议访问vm._data.key 因为下划线就默认为私有属性，不应该去访问她
+ */
 export function proxy (target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter () {
     return this[sourceKey][key]
@@ -45,9 +50,14 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
+  /* 3-2-1 判断options，如果定义了props，就会初始化props
+    判断methods，如果定义了methods，就会初始化methods
+    判断data，如果定义了data，就会初始化data
+   */
   if (opts.props) initProps(vm, opts.props)
   if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
@@ -109,8 +119,10 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+// 3-2-2 分析initData
 function initData (vm: Component) {
   let data = vm.$options.data
+// 3-2-3 判断是不是function，还赋值给了vm._data
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -127,6 +139,10 @@ function initData (vm: Component) {
   const props = vm.$options.props
   const methods = vm.$options.methods
   let i = keys.length
+  /* 
+    3-2-4 这个循环判断其实就是说，不能使用重复的键名，例如，假如data里使用了msg, 那么props里或methods里等等就不可以再用了
+    不能重名的原因是因为最终都会挂载到vm实例上
+  */ 
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
@@ -144,6 +160,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 3-2-5 为什么在vue里可以使用this 互相调用data或者methods等等呢，就是通过这个代理
       proxy(vm, `_data`, key)
     }
   }
@@ -155,6 +172,7 @@ export function getData (data: Function, vm: Component): any {
   // #7573 disable dep collection when invoking data getters
   pushTarget()
   try {
+  // 3-2-4 getData call了一下
     return data.call(vm, vm)
   } catch (e) {
     handleError(e, vm, `data()`)
