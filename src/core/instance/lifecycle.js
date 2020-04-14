@@ -137,14 +137,18 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 }
-
 export function mountComponent (
   vm: Component,
   el: ?Element,
   hydrating?: boolean
-): Component {
+  ): Component {
+    /* 4-4-2 mountComponent 首先会把el这个dom 用vm.$el做缓存 */
   vm.$el = el
+  /* 4-4-3 判断是否用render函数（并没有写render函数并且template没有正确转化render函数） */
   if (!vm.$options.render) {
+    /* 4-4-4 那么就会创建一个空vnode，然后报一个警告
+      这个错误其实就是使用了runtime-only版本 然后又写了template而不是写render函数
+      或者说写了template多但是没有使用编译版本  */
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
@@ -157,6 +161,7 @@ export function mountComponent (
           vm
         )
       } else {
+        // 4-4-5 还有一种情况是没有写template也没有写render函数
         warn(
           'Failed to mount component: template or render function not defined.',
           vm
@@ -165,9 +170,10 @@ export function mountComponent (
     }
   }
   callHook(vm, 'beforeMount')
-
+  // 4-4-6定义的updateComponent最终是一个方法
   let updateComponent
   /* istanbul ignore if */
+  // 4-4-7 在开发环境并且配置了performance和mark（性能埋点相关, 也就是说vue提供了一些性能埋点让我们知道我们应用的运行状况，当程序比较卡的时候可以利用performance这些东西）
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
       const name = vm._name
@@ -187,14 +193,24 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // 4-4-8调用vm._update，通过vm._render渲染出一个vnode，第二个参数是服务端渲染相关
       vm._update(vm._render(), hydrating)
+      /*  4-5-7 开始执行 vm._update(vm._render(), hydrating) 这两个函数就是最终挂载dom需要用的函数
+        先执行render,render生成一个vnode，然后调update，把vnode传入进去 */
+
     }
   }
 
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+
+  /* 4-5-1 调用了一个new Watcher执行updateComponent，这是一个渲染watcher（响应式原理相关，观察者模式）
+    调用new Watcher时候，第一个参数是vue实例，第二个是函数，第三个noop其实就是空函数，第四个是配置对象，第五个是Boolean*/
   new Watcher(vm, updateComponent, noop, {
+    /* 4-5-8 通过watcher使用updateComponent是因为updateComponent方法实际上就是执行了一次真实的渲染
+      真实的渲染过程除了首次渲染，之后在更新数据的时候还是会触发渲染watcher，再次执行updateComponent方法
+      这是一个监听到执行的过程，当数据发生变化视图修改，入口也是updateComponent方法 */
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
         callHook(vm, 'beforeUpdate')

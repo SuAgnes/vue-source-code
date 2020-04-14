@@ -47,10 +47,12 @@ export default class Watcher {
     expOrFn: string | Function,
     cb: Function,
     options?: ?Object,
-    isRenderWatcher?: boolean
+    /* 4-5-2 是否是渲染watcher的标志位 */
+    isRenderWatcher?: boolean 
   ) {
     this.vm = vm
     if (isRenderWatcher) {
+      // 4-5-3 isRenderWatcher传true的话在vm上加一个_watcher 
       vm._watcher = this
     }
     vm._watchers.push(this)
@@ -76,9 +78,11 @@ export default class Watcher {
       ? expOrFn.toString()
       : ''
     // parse expression for getter
+    // 4-5-4 判断expOrFn如果是函数，如果是就把watcher的getter赋值给这个函数
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+      // 4-5-5 否则调用parsePath转化一下expOrFn
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -103,6 +107,7 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
+      // 4-5-6 在这里调用getter，也就是执行updateComponent的方法
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
