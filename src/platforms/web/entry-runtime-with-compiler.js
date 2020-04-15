@@ -16,7 +16,8 @@ const idToTemplate = cached(id => {
 
 /* 4-1-1 实例挂载的实现首先，获得mount方法，然后重新定义了这个方法
   重新定义是因为./runtime/index文件是给runtime-only使用的mount，而里面没有下面的这些逻辑
-  在compiler版本里执行$mount方法时候实际上要调用下面这个函数 */
+  在compiler版本里执行$mount方法时候实际上要调用下面这个函数
+  runtime + compiler 版本之所以要重新定义 $mount 方法，是因为它要先执行一遍把组件对象中可能定义的 template 编译生成 render 函数的过程。而 runtime-only 版本只支持在组件对象中定义 render 函数。也就是说 runtime + compiler 版本的 $mount 会多做一步编译模板，后面的流程都一样的，所以可以复用后面的 mount 逻辑。*/
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,

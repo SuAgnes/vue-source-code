@@ -1,5 +1,10 @@
 /* @flow */
 
+/* 
+  5-4-1 在这里生产vnode，vnode其实是一个树。
+  每个vnode拥有自己的children, children又有自己的children，最终构成vnode-tree。
+  vue的vnode参考了一个叫做snabbdom的实现，vue在这上面又做了很多扩展
+ */
 export default class VNode {
   tag: string | void;
   data: VNodeData | void;

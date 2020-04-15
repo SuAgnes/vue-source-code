@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== 'production') {
     'require' // for Webpack/Browserify
   )
 
+  /* 5-2-8 报警告 也就是说在render过程中使用了一个没有在属性、方法或data中定义的值 */
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }
 
+  // 5-2-3 hasProxy 其实就是判断当前游览器是否支持Proxy
   const hasProxy =
     typeof Proxy !== 'undefined' && isNative(Proxy)
 
@@ -51,13 +53,18 @@ if (process.env.NODE_ENV !== 'production') {
       }
     })
   }
-
   const hasHandler = {
     has (target, key) {
+      /* 5-2-5 元素是否在target上，如果元素不再target上，has为false */
       const has = key in target
+      /* 5-2-6 isAllowed是全局的一些属性方法，或者是一些私有方法 */
       const isAllowed = allowedGlobals(key) ||
-        (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data))
+      (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data))
       if (!has && !isAllowed) {
+        /* 5-2-7 如果5-2-5与5-2-6都不满足的话，并且key不在target.$data中，就会执行warnNonPresent，
+          否则会报一个warnReservedPrefix警告，说名字以 _ 或 $开始的属性不会被 Vue 实例代理，因为它们可能与 Vue 的内置属性与 API 方法冲突。用 vm.$data._property 访问它们。
+          vue的所有警告都会在开发阶段报出来，在生产环境是看不到的
+          */
         if (key in target.$data) warnReservedPrefix(target, key)
         else warnNonPresent(target, key)
       }
@@ -76,12 +83,15 @@ if (process.env.NODE_ENV !== 'production') {
   }
 
   initProxy = function initProxy (vm) {
+    // 5-2-2 首先判断hasProxy
     if (hasProxy) {
       // determine which proxy handler to use
       const options = vm.$options
       const handlers = options.render && options.render._withStripped
         ? getHandler
         : hasHandler
+      // 5-2-4 在我们这个case下handlers指向了hasHandler
+
       vm._renderProxy = new Proxy(vm, handlers)
     } else {
       vm._renderProxy = vm
