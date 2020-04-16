@@ -193,7 +193,8 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
-      // 4-4-8调用vm._update，通过vm._render渲染出一个vnode，第二个参数是服务端渲染相关
+      // 4-4-8 调用vm._update，通过vm._render渲染出一个vnode，第二个参数是服务端渲染相关
+      // 6-3-1 第一个参数就是刚刚调用_createElement的返回值，update把vnode生成为真实的dom
       vm._update(vm._render(), hydrating)
       /*  4-5-7 开始执行 vm._update(vm._render(), hydrating) 这两个函数就是最终挂载dom需要用的函数
         先执行render,render生成一个vnode，然后调update，把vnode传入进去 */

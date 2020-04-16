@@ -52,6 +52,7 @@ export function initRender (vm: Component) {
     因为是手写render，就不会执行把template转换成render的那一步了。
     而我们挂载的元素会替换掉html里的元素，也就是说，我们即使定义了<div id="app">{{message}}</div>,也会被#app1替换掉，这也就是为什么不能在body上挂载元素，因为我们不能替换body。
   */
+  //  6-2-7 vnode就是createElement的返回值
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
@@ -111,6 +112,7 @@ export function renderMixin (Vue: Class<Component>) {
       // when parent component is patched.
       currentRenderingInstance = vm
       /* 5-1-2 vm._renderProxy其实就是vm(this), 这个定义也发生在init的时候 */
+      //  6-2-8 这个vnode也就是刚刚返回的vnode（vm.$createElement）
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
@@ -150,6 +152,7 @@ export function renderMixin (Vue: Class<Component>) {
     }
     // set parent
     vnode.parent = _parentVnode
+    // 6-2-9 再把这个vnode返回出去（Vue.prototype._render）
     return vnode
   }
 }

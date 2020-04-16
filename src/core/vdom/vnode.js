@@ -76,6 +76,7 @@ export default class VNode {
   }
 }
 
+/* 6-1-5 创建一个vnode实例，不传参数，实际上这就是一个注释节点，注释vnode */
 export const createEmptyVNode = (text: string = '') => {
   const node = new VNode()
   node.text = text
@@ -83,6 +84,7 @@ export const createEmptyVNode = (text: string = '') => {
   return node
 }
 
+// 6-1-14 实例化vnode，前三个参数（tag, data, children）为undefined，第四个参数(text)为string，所以是文本vnode
 export function createTextVNode (val: string | number) {
   return new VNode(undefined, undefined, undefined, String(val))
 }
