@@ -57,6 +57,7 @@ export function initLifecycle (vm: Component) {
 
 export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
+    // 7-1-1 这些变量都是数据更新时用的，update首次渲染会调用，把vnode映射成dom，还有就是当改变数据的时候，数据改变也会驱动视图，也会调update
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
@@ -66,6 +67,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // based on the rendering backend used.
     if (!prevVnode) {
       // initial render
+      /* 7-1-9 vm.$el: dom对象 */
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates

@@ -1,7 +1,7 @@
 /* @flow */
 
 import { namespaceMap } from 'web/util/index'
-
+/* 7-1-4 nodeOps 操作dom的方法 */
 export function createElement (tagName: string, vnode: VNode): Element {
   const elm = document.createElement(tagName)
   if (tagName !== 'select') {

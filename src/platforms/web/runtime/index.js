@@ -31,6 +31,7 @@ extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
 // install platform patch function
+// 7-1-2 是否在浏览器环境（vuejs可以跑服务端）如果在浏览器环境有patch方法，否则是空函数（因为服务端不会有dom）
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method

@@ -70,9 +70,10 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
 export function createPatchFunction (backend) {
   let i, j
   const cbs = {}
-
+  
   const { modules, nodeOps } = backend
-
+  
+/* 7-1-6 遍历所有模块，然后拿到所有模块的一些钩子，hooks就是['create', 'activate', 'update', 'remove', 'destroy'] */
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -82,6 +83,7 @@ export function createPatchFunction (backend) {
     }
   }
 
+/* 7-1-11 把真实dom转换成vnode */
   function emptyNodeAt (elm) {
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
   }
@@ -153,6 +155,7 @@ export function createPatchFunction (backend) {
         if (data && data.pre) {
           creatingElmInVPre++
         }
+        /* 7-1-15 检测是否注册了组件 */
         if (isUnknownElement(vnode, creatingElmInVPre)) {
           warn(
             'Unknown custom element: <' + tag + '> - did you ' +
@@ -162,10 +165,10 @@ export function createPatchFunction (backend) {
           )
         }
       }
-
+      /* 7-3-1 也就是说，首先定义了一个element（当前元素） */
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
-        : nodeOps.createElement(tag, vnode)
+        : nodeOps.createElement(tag, vnode) // 7-1-16 对原生创建dom的一个封装
       setScope(vnode)
 
       /* istanbul ignore if */
@@ -188,10 +191,14 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
+        // 7-1-17 web平台逻辑 这个逻辑是说如果vnode还有子节点那么先创建子节点
+        // 7-3-2 然后调用createChildren去插入子元素，所以插入顺序是先插入子元素，然后再插入父
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
+        /* 7-1-20 最终调用insert去调用，传入父挂载节点，当前vnode节点，参考节点 */
+        // 7-3-3 最后调insert 先插入子再插入父，父节点最终会挂载到一个真实的dom上
         insert(parentElm, vnode.elm, refElm)
       }
 
@@ -202,6 +209,7 @@ export function createPatchFunction (backend) {
       vnode.elm = nodeOps.createComment(vnode.text)
       insert(parentElm, vnode.elm, refElm)
     } else {
+      /* 7-2-2 普通的创建一个文本节点 比如说<div> {{message}} </div>, 然后添加到body（父节点）上 */
       vnode.elm = nodeOps.createTextNode(vnode.text)
       insert(parentElm, vnode.elm, refElm)
     }
@@ -269,6 +277,7 @@ export function createPatchFunction (backend) {
     insert(parentElm, vnode.elm, refElm)
   }
 
+  // 7-2-1 判断是否有ref，然后调用不同的方法，这两个方法都是对原生dom的封装。（最后插入dom就是用这个insert）
   function insert (parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -282,6 +291,7 @@ export function createPatchFunction (backend) {
   }
 
   function createChildren (vnode, children, insertedVnodeQueue) {
+    /* 7-1-18 如果传入的是一个数组 ，就遍历children，遍历调用createElm去创建，同时把当前的vnode当作父节点插入， */
     if (Array.isArray(children)) {
       if (process.env.NODE_ENV !== 'production') {
         checkDuplicateKeys(children)
@@ -290,6 +300,7 @@ export function createPatchFunction (backend) {
         createElm(children[i], insertedVnodeQueue, vnode.elm, null, true, children, i)
       }
     } else if (isPrimitive(vnode.text)) {
+      /*7-1-19 如果传入的是一个普通对象，就直接调用appendChild方法去添加 */
       nodeOps.appendChild(vnode.elm, nodeOps.createTextNode(String(vnode.text)))
     }
   }
@@ -696,7 +707,9 @@ export function createPatchFunction (backend) {
       return node.nodeType === (vnode.isComment ? 8 : 3)
     }
   }
+  /* 7-1-7 */
 
+  /* 7-1-10 oldVnode: 真实dom，vnode:watchdom */
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
@@ -740,14 +753,16 @@ export function createPatchFunction (backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+
           oldVnode = emptyNodeAt(oldVnode)
         }
 
         // replacing existing element
-        const oldElm = oldVnode.elm
-        const parentElm = nodeOps.parentNode(oldElm)
+        const oldElm = oldVnode.elm // 7-1-12 真实dom 例如div#app
+        const parentElm = nodeOps.parentNode(oldElm) // 7-1-13 拿div#app距离 parentElm就是body
 
         // create new node
+        /* 7-1-14 这个函数的作用是把vnode挂载到真实的dom上 */
         createElm(
           vnode,
           insertedVnodeQueue,
@@ -789,6 +804,7 @@ export function createPatchFunction (backend) {
         }
 
         // destroy old node
+        // 7-4-1 比如说 最早是<div></div> 然后会生成一个带有message的新dom节点，然后把之前的空节点删除掉
         if (isDef(parentElm)) {
           removeVnodes([oldVnode], 0, 0)
         } else if (isDef(oldVnode.tag)) {
