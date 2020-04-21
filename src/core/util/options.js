@@ -275,14 +275,16 @@ function checkComponents (options: Object) {
     validateComponentName(key)
   }
 }
-
+// 8-1-7 组件名校验
 export function validateComponentName (name: string) {
+  // 字母开头 连字符结尾，不满足的话会报无效组件名的错误
   if (!new RegExp(`^[a-zA-Z][\\-\\.0-9_${unicodeRegExp.source}]*$`).test(name)) {
     warn(
       'Invalid component name: "' + name + '". Component names ' +
       'should conform to valid custom element name in html5 specification.'
     )
   }
+  // 如果传入一个html标签，证明有冲突，会报错 ↓↓
   if (isBuiltInTag(name) || config.isReservedTag(name)) {
     warn(
       'Do not use built-in or reserved HTML elements as component ' +

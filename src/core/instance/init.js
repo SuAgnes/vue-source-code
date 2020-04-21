@@ -41,6 +41,8 @@ export function initMixin (Vue: Class<Component>) {
         el：这里的el
         data: vm.$options.data
       }) */
+
+    // 8-1-4 在此处合并$options, 会把大vue的options会合并到vm.$options上
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},

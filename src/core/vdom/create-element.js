@@ -139,6 +139,14 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    /* 8-1-1 
+    如果是 new Vue({
+      el: '#app',
+      render(h) {
+        return h(App)
+      }
+    })
+    这种形式的话，实际上传入的就不是一个字符串（例如div），而是一个组件对象（object类型）*/
     vnode = createComponent(tag, data, context, children)
   }
   if (Array.isArray(vnode)) {

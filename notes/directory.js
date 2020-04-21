@@ -13,7 +13,7 @@
   // util
     // 一些工具方法
   // vdom
-    // watch dom的一些方法
+    // virtual dom的一些方法
 // platforms
   // web 浏览器程序（平时开发）
   // weex 类似rn的跨端应用
