@@ -98,6 +98,7 @@ Vue.prototype.$mount = function (
   /* 4-3-3 如果有render函数就可以直接调用mount方法，如果没有就会把模板转化，编译生成render()，然后调用 ↓↓
     这个mount就是之前在上面定义的mount 见runtime/index.js */
   return mount.call(this, el, hydrating)
+  // 9-2-3 因为组件在编译过程中就会生产render方法，所以会直接执行mount.call(this, el, hydrating)
 }
 
 /**

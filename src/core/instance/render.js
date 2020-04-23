@@ -92,7 +92,6 @@ export function renderMixin (Vue: Class<Component>) {
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options
-
     if (_parentVnode) {
       vm.$scopedSlots = normalizeScopedSlots(
         _parentVnode.data.scopedSlots,
@@ -103,7 +102,8 @@ export function renderMixin (Vue: Class<Component>) {
 
     // set parent vnode. this allows render functions to have access
     // to the data on the placeholder node.
-    vm.$vnode = _parentVnode
+    // 9-2-6 拿到父占位符 赋值给vm.$vnode，这里就是那个占位符的vnode
+    vm.$vnode = _parentVnode 
     // render self
     let vnode
     try {
@@ -113,6 +113,7 @@ export function renderMixin (Vue: Class<Component>) {
       currentRenderingInstance = vm
       /* 5-1-2 vm._renderProxy其实就是vm(this), 这个定义也发生在init的时候 */
       //  6-2-8 这个vnode也就是刚刚返回的vnode（vm.$createElement）
+    // 9-2-7 调用render.call 生成渲染vnode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
@@ -151,6 +152,7 @@ export function renderMixin (Vue: Class<Component>) {
       vnode = createEmptyVNode()
     }
     // set parent
+    // 9-2-8 渲染vnode实际上最终parent会指向占位符vnode（父vnode)
     vnode.parent = _parentVnode
     // 6-2-9 再把这个vnode返回出去（Vue.prototype._render）
     return vnode

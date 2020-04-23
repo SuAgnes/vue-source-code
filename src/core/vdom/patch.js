@@ -139,14 +139,16 @@ export function createPatchFunction (backend) {
       // potential patch errors down the road when it's used as an insertion
       // reference node. Instead, we clone the node on-demand before creating
       // associated DOM element for it.
+      // 9-1-1 这里的vnode是一个组件vndoe
       vnode = ownerArray[index] = cloneVNode(vnode)
     }
 
     vnode.isRootInsert = !nested // for transition enter check
+    /* 9-4-4 要渲染子组件的话，要先判断子组件本身的根vnode是否是一个组件，如果是组件的话return出去，执行外部函数 */
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
-
+    /* 9-4-5 如果不是一个组件的话 就去判断data/children/tag */
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
@@ -166,6 +168,7 @@ export function createPatchFunction (backend) {
         }
       }
       /* 7-3-1 也就是说，首先定义了一个element（当前元素） */
+    /* 9-4-6 给渲染vnode创建一个elm节点 */
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode) // 7-1-16 对原生创建dom的一个封装
@@ -183,11 +186,14 @@ export function createPatchFunction (backend) {
           }
           insert(parentElm, vnode.elm, refElm)
         }
+        /* 9-4-7 执行createChildren 遍历我们的children然后执行createElm方法
+        在这个过程中，如果某个children有子组件，依然会再次执行createComponent递归，建立组件树，普通节点就会执行下面的插入 */
         createChildren(vnode, children, insertedVnodeQueue)
         if (appendAsTree) {
           if (isDef(data)) {
             invokeCreateHooks(vnode, insertedVnodeQueue)
           }
+          /* 9-4-8 这里与普通节点不同的是，insert时，parentElm是空，在执行insert时，insert判断如果parent是空，就不做任何DOM插入 */
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
@@ -215,18 +221,22 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 9-1-2 createComponent方法
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
       if (isDef(i = i.hook) && isDef(i = i.init)) {
+        // 首先拿到data.hook, 以及判断hook中是否有init这个方法，最后执行init这个方法
         i(vnode, false /* hydrating */)
+        /* 9-4-10 这个init方法执行的最终会完成组件的patch */
       }
       // after calling the init hook, if the vnode is a child component
       // it should've created a child instance and mounted it. the child
       // component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
       if (isDef(vnode.componentInstance)) {
+        /* 9-4-11 patch结束后，会开始执行initComponent */
         initComponent(vnode, insertedVnodeQueue)
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
@@ -236,12 +246,16 @@ export function createPatchFunction (backend) {
       }
     }
   }
-
   function initComponent (vnode, insertedVnodeQueue) {
     if (isDef(vnode.data.pendingInsert)) {
       insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert)
       vnode.data.pendingInsert = null
     }
+    /* 9-4-12 首先会把vnode.componentInstance.$el返回给vnode.elm，因为patch的结果实际上是返回dom
+    那返回dom在最终执行lifecycle时，会把结果赋值给vm.$el，然后就会赋值给vnode.elm
+    在最终调用insert时，parentElm是有值的，也就是说挂载的父节点是有值的，也就是组件插入是在执行insert方法时，插入顺序是先子后父。
+    在执行createComponent时，它实际上是递归执行子组件的创建，render/update/patch过程 然后 patch过程中，如果又遇到组件，又会执行子组件的createComponent方法，又会执行到子组件的patch
+    所以说子组件是父组件先进patch的, 也会先insert，子组件insert完之后再执行父组件的insert。  */
     vnode.elm = vnode.componentInstance.$el
     if (isPatchable(vnode)) {
       invokeCreateHooks(vnode, insertedVnodeQueue)
@@ -710,6 +724,9 @@ export function createPatchFunction (backend) {
   /* 7-1-7 */
 
   /* 7-1-10 oldVnode: 真实dom，vnode:watchdom */
+  /* 9-4-2 vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false) 
+  这时候vm.$el是一个undefined，然后把patch的返回值返回给他
+  因为vm.$el是一开始是undefined 所以相当于oldVnode也是，就会走到sUndef(oldVnode)的逻辑*/
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
@@ -721,6 +738,7 @@ export function createPatchFunction (backend) {
 
     if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
+      /* 9-4-3 createElm传入当前渲染的vnode，第二个insertedVnodeQueue*/
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {

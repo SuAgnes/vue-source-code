@@ -41,6 +41,7 @@ Vue.prototype.$mount = function (
 ): Component {
   // 4-4-1 对el做了一次判断，然后执行mountComponent方法
   el = el && inBrowser ? query(el) : undefined
+  // 9-2-4 mount.call是执行mountComponent
   return mountComponent(this, el, hydrating)
 }
 

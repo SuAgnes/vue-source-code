@@ -36,12 +36,14 @@ import {
 
 // 8-2-7 每个组件都有的默认hooks
 const componentVNodeHooks = {
+  // 9-1-3 从patch的i(vnode, false /* hydrating */)执行到这里
   init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
       !vnode.componentInstance._isDestroyed &&
       vnode.data.keepAlive
     ) {
+      // keep-alive逻辑
       // kept-alive components, treat as a patch
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
@@ -49,7 +51,9 @@ const componentVNodeHooks = {
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
-      )
+        ) // 9-2-1 createComponentInstanceForVnode实际上是返回子组件的实例
+        // 9-1-4 返回一个vm实例 传入了组件的vnode，activeInstance
+        // 9-2-2 patch的i(vnode, false) 所以hydrating是false，所以是undefined
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
@@ -219,14 +223,15 @@ export function createComponent (
   return vnode
 }
 
+// 9-1-5 createComponentInstanceForVnode
 export function createComponentInstanceForVnode (
   vnode: any, // we know it's MountedComponentVNode but flow doesn't
-  parent: any, // activeInstance in lifecycle state
+  parent: any, // activeInstance in lifecycle state vm实例
 ): Component {
   const options: InternalComponentOptions = {
     _isComponent: true,
-    _parentVnode: vnode,
-    parent
+    _parentVnode: vnode, // 父vnode（占位符vnode）
+    parent // 当前vm实例，作为当前子组件的父级vm实例
   }
   // check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate
@@ -234,6 +239,7 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+  // 9-1-6 实际上就是执行extend中定义的Sub构造函数 sub执行子组件的构造函数以及子组件的init方法 init方法回到vue的初始化
   return new vnode.componentOptions.Ctor(options)
 }
 
