@@ -265,6 +265,7 @@ export function createPatchFunction (backend) {
       // skip all element-related modules except for ref (#3455)
       registerRef(vnode)
       // make sure to invoke the insert hook
+      
       insertedVnodeQueue.push(vnode)
     }
   }
@@ -726,7 +727,7 @@ export function createPatchFunction (backend) {
   /* 7-1-10 oldVnode: 真实dom，vnode:watchdom */
   /* 9-4-2 vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false) 
   这时候vm.$el是一个undefined，然后把patch的返回值返回给他
-  因为vm.$el是一开始是undefined 所以相当于oldVnode也是，就会走到sUndef(oldVnode)的逻辑*/
+  因为vm.$el是一开始是undefined 所以相当于oldVnode也是，就会走到isUndef(oldVnode)的逻辑*/
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)

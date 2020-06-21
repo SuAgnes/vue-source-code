@@ -28,12 +28,14 @@ export function initMixin (Vue: Class<Component>) {
 
     // a flag to avoid this being observed
     vm._isVue = true
+    // 10-1-2 这两条都是做合并配置的
     // merge options
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       // 9-1-7 用initInternalComponent去合并
+      // 10-1-24 组件初始化时执行 这个vm是子组件实例
       initInternalComponent(vm, options)
     } else {
       /* 3-1-2把我们传入的options最后都合并到$options上
@@ -43,11 +45,14 @@ export function initMixin (Vue: Class<Component>) {
       }) */
 
     // 8-1-4 在此处合并$options, 会把大vue的options会合并到vm.$options上
+    // 10-1-3 执行new Vue时会执行这里 因为options._isComponent为false
       vm.$options = mergeOptions(
-        resolveConstructorOptions(vm.constructor),
-        options || {},
+        resolveConstructorOptions(vm.constructor), // 10-1-5 这里是大Vue的vm.constructor
+        options || {}, // 10-1-6 定义new Vue的时候传入的 new Vue({这里面的})
         vm
       )
+      // 10-1-19 第一个参数是大Vue.options
+      // 10-1-22 在init的时候会调用mergeOptions把new Vue的options 和 大Vue的options做合并，在调用全局mixins的时候也是调用mergeoptions
     }
     /* istanbul ignore else */
     /* 5-2-1 如果说当前在生产环境，就直接把vm._renderProxy赋值给vm, 如果是开发环境就执行initProxy  */
@@ -84,8 +89,10 @@ export function initMixin (Vue: Class<Component>) {
 }
 
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
+  // 10-1-25 vm.constructor是子组件构造器
   // 9-1-8 initInternalComponent 定义了通过vm.constructor去创建一个对象，赋值给vm.$options
   const opts = vm.$options = Object.create(vm.constructor.options)
+  // 10-1-27 在实例化子组件的时候需要传入父组件的vnode和父组件的vue实例 所以_parentVnode和parent都赋值给opts
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode
   opts.parent = options.parent
@@ -103,8 +110,10 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   }
 }
 
+
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
+  // 10-1-4 大Vue的suoer是undefined 所以这里面逻辑不会被执行
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
@@ -124,6 +133,7 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
       }
     }
   }
+  // 返回大Vue的options
   return options
 }
 

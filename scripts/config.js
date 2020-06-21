@@ -26,7 +26,7 @@ const weexFactoryPlugin = {
 }
 
 const aliases = require('./alias') // 1-8-3 详见alias.js 1-9
-// 1-8-2 接受一个参数，然后通过split拿到第一个参数，所以说调用的resolve的前面这个字符串resolve('web/entry-runtime.js') 斜线前面是作为base
+// 1-8-2 接受一个参数，然后通过split拿到第一个值，调用的resolve的前面这个字符串resolve('web/entry-runtime.js') 斜线前面是作为base
 const resolve = p => {
   const base = p.split('/')[0]
   // 1-10 拿builds的第一个对象举例，base就是'web'，去alias.js寻找web对应的alias

@@ -111,50 +111,14 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
-      /* 5-1-2 vm._renderProxy其实就是vm(this), 这个定义也发生在init的时候 */
-      //  6-2-8 这个vnode也就是刚刚返回的vnode（vm.$createElement）
     // 9-2-7 调用render.call 生成渲染vnode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
-      handleError(e, vm, `render`)
-      // return error render result,
-      // or previous vnode to prevent render error causing blank component
-      /* istanbul ignore else */
-      if (process.env.NODE_ENV !== 'production' && vm.$options.renderError) {
-        try {
-          /* 5-3-1 render方法实际上就会生产一个vnode */
-          vnode = vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)
-        } catch (e) {
-          handleError(e, vm, `renderError`)
-          vnode = vm._vnode
-        }
-      } else {
-        vnode = vm._vnode
-      }
-    } finally {
-      currentRenderingInstance = null
+      // ...
+      // ...
     }
-    // if the returned array contains only a single node, allow it
-    if (Array.isArray(vnode) && vnode.length === 1) {
-      vnode = vnode[0]
-    }
-    // return empty vnode in case the render function errored out
-    /* 5-3-2 判断我们的vnode是否是VNode的实例 */
-    if (!(vnode instanceof VNode)) {
-    /* 5-3-3 如果不是，那么说明我们模板有了多个根节点，就会返回多个vnode */
-      if (process.env.NODE_ENV !== 'production' && Array.isArray(vnode)) {
-        warn(
-          'Multiple root nodes returned from render function. Render function ' +
-          'should return a single root node.',
-          vm
-        )
-      }
-      vnode = createEmptyVNode()
-    }
-    // set parent
-    // 9-2-8 渲染vnode实际上最终parent会指向占位符vnode（父vnode)
+    // 9-2-8 渲染vnode.parent实际上最终会指向占位符vnode（父vnode)
     vnode.parent = _parentVnode
-    // 6-2-9 再把这个vnode返回出去（Vue.prototype._render）
     return vnode
   }
 }

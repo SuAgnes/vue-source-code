@@ -7,22 +7,35 @@
   <title>Document</title>
 </head>
 <body>
-<div id="app">
-    {{message}}
-            <!-- <div v-for="item in list">
-                {{ item }}
-            </div> -->
-</div>
-<!-- isDef 判断是否为undefined或null isPrimitive 是否是简单类型 -->
+<!-- <div id="app"></div> -->
         <script src="../dist/vue.js"></script>
         <script type="text/javascript">
-        var app = new Vue({
-                el: '#app',
-                data: {
-                    message: 'hhh'
-                    // list: [1, 2, 3]
-                }
-            })
+        // var app = new Vue({
+        //         el: '#app',
+        //         data: {
+        //             message: 'hhh'
+        //             // list: [1, 2, 3]
+        //         }
+        //     })
+        let div = document.createElement('div');
+        div.setAttribute('id', 'app');
+        document.body.appendChild(div);
+        new Vue({
+        el: '#app',
+        render(createElement) {
+            return createElement ('div', {
+            attrs: {
+                id: '#newApp' //此处是newApp，非app，后面会用到
+            }
+            }, this.message) // 此处相当于子节点
+        },
+        // template: '<div id="app">{{message}}</div>',
+        data() {
+            return {
+            message: 'hello'
+            }
+        }
+        })
         </script>
 
 </body>

@@ -143,10 +143,14 @@ strats.data = function (
 /**
  * Hooks and props are merged as arrays.
  */
+// 10-1-16 生命周期合并策略
 function mergeHook (
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
 ): ?Array<Function> {
+  /* 10-1-17 可以传入array function 也可以传入function 返回的是array function, 也就是说生命周期通过merge后返回的是一个数组
+    如果子未定义直接取父 如果子定义的话看父的定义 如果父定义把父和子做一个合并，如果没有父就看子是不是一个数组，如果是数组就直接返回数组，否则构造成数组
+  */
   const res = childVal
     ? parentVal
       ? parentVal.concat(childVal)
@@ -261,6 +265,7 @@ strats.provide = mergeDataOrFn
 /**
  * Default strategy.
  */
+// 10-1-15 如果没有子的话就用父 否则用子
 const defaultStrat = function (parentVal: any, childVal: any): any {
   return childVal === undefined
     ? parentVal
@@ -387,6 +392,8 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
  */
+
+//  10-1-7 这个函数其实就是把child 和 parent做了合并
 export function mergeOptions (
   parent: Object,
   child: Object,
@@ -394,6 +401,7 @@ export function mergeOptions (
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
     checkComponents(child)
+    // 10-1-8 这做一个组件定义的检测
   }
 
   if (typeof child === 'function') {
@@ -409,28 +417,34 @@ export function mergeOptions (
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
   if (!child._base) {
+    // 10-1-9 如果有extends 就递归调用mergeOptions
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+    // 10-1-10 如果有mixins的话也是递归调用 mergeOptions
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
       }
     }
   }
-
+  // 10-1-11 真正的合并逻辑，首先定义一个空对象 这个空对象是最后要返回的值
   const options = {}
   let key
+  // 10-1-12 先遍历parent再遍历child
   for (key in parent) {
     mergeField(key)
   }
   for (key in child) {
+    // 10-1-13 如果child里的key不在parent中的话 再次调用mergeField
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
   function mergeField (key) {
+  // 10-1-14 通过strats拿到不同的start函数 strats其实是很多个不同的合并策略
     const strat = strats[key] || defaultStrat
+    // 10-1-18 每个key对应了生命周期 最终会把生命周期的每个key作为options的key, 然后通过生命周期的合并策略函数合并处理的结果 类型是array-function
     options[key] = strat(parent[key], child[key], vm, key)
   }
   return options

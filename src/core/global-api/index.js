@@ -54,6 +54,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   }
   </T>
   // 2-4-3 options 其实可以用来合并一些方法
+  // 10-1-20 Vue.options定义的位置 一开始是一个空对象，然后把 ASSET_TYPES 扩展到 Vue.options
   Vue.options = Object.create(null)
   // 2-5-1 去shared/constants看ASSET_TYPES
   ASSET_TYPES.forEach(type => {
@@ -65,6 +66,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   Vue.options._base = Vue
   // 2-5-2 builtInComponents其实是一个内置组件 详见components/index
   // 2-5-4 也就是说KeepAlive其实是vue的一个内置组件，通过extend方法扩展到Vue.options.components下面
+  // 10-1-21 扩展一些内置组件 keep-alive/transition/transition-group之列
   extend(Vue.options.components, builtInComponents)
   // 2-5-5
   initUse(Vue) // 创造Vue.use()方法

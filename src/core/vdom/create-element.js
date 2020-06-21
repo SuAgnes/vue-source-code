@@ -40,7 +40,7 @@ export function createElement (
     children = data
     data = undefined
   }
-  if (isTrue(al waysNormalize)) {
+  if (isTrue(alwaysNormalize)) {
     normalizationType = ALWAYS_NORMALIZE
   }
   /* 6-1-3 createElement实际上最后是调用了_createElement，这里的createElement只是为_createElement做了一层参数封装
@@ -55,7 +55,7 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
-  /* 6-1-4 data是否是响应式的，当把一个对象调用definedReactive的时候，就会给对象添加一个.__ob__属性
+  /* 6-1-4 data是否是响应式的，当把一个对象调用defineReactive的时候，就会给对象添加一个.__ob__属性
   一旦有.__ob__这个属性，就说明是响应式的，这段代码↓判断data如果是响应式的，就会报出一个警告，然后调用createEmptyVNode */
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(

@@ -47,9 +47,10 @@ export function initExtend (Vue: GlobalAPI) {
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
     // 把自身配置和Vue的配置做合并
+    // 10-1-26 子组件合并
     Sub.options = mergeOptions(
-      Super.options,
-      extendOptions
+      Super.options, // 大Vue的options
+      extendOptions // 子组件的options
     )
     Sub['super'] = Super
 
