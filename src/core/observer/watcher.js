@@ -53,8 +53,10 @@ export default class Watcher {
     this.vm = vm
     if (isRenderWatcher) {
       // 4-5-3 isRenderWatcher传true的话在vm上加一个_watcher 
+      // 11-2-10 如果是渲染watcher就会把当前watcher 赋值给 vm._watcher，所以vue的_watcher表示了一个渲染watcher
       vm._watcher = this
     }
+    // 11-2-11 同时push到_watchers中
     vm._watchers.push(this)
     // options
     if (options) {
@@ -62,6 +64,7 @@ export default class Watcher {
       this.user = !!options.user
       this.lazy = !!options.lazy
       this.sync = !!options.sync
+      // 11-2-9 在创建watcher时会保存before
       this.before = options.before
     } else {
       this.deep = this.user = this.lazy = this.sync = false

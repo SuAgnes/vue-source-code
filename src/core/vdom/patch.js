@@ -182,6 +182,7 @@ export function createPatchFunction (backend) {
         const appendAsTree = isDef(data) && isTrue(data.appendAsTree)
         if (!appendAsTree) {
           if (isDef(data)) {
+            // 11-1-11 data 是 vnode的data 如果有就执行invokeCreateHooks
             invokeCreateHooks(vnode, insertedVnodeQueue)
           }
           insert(parentElm, vnode.elm, refElm)
@@ -222,6 +223,7 @@ export function createPatchFunction (backend) {
   }
 
   // 9-1-2 createComponent方法
+  // 11-1-13 createComponent 是以递归方式不断初始化子组件 以及patch子组件
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
@@ -237,6 +239,8 @@ export function createPatchFunction (backend) {
       // in that case we can just return the element and be done.
       if (isDef(vnode.componentInstance)) {
         /* 9-4-11 patch结束后，会开始执行initComponent */
+        // 11-1-14 所有子组件patch完成后，执行initComponent
+        // 11-1-17 因为父组件在调用子组件时，会把子组件的patch都执行完后再往下走 所以子要先插入 父后插入
         initComponent(vnode, insertedVnodeQueue)
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
@@ -258,6 +262,7 @@ export function createPatchFunction (backend) {
     所以说子组件是父组件先进patch的, 也会先insert，子组件insert完之后再执行父组件的insert。  */
     vnode.elm = vnode.componentInstance.$el
     if (isPatchable(vnode)) {
+        // 11-1-15 在这执行invokeCreateHooks
       invokeCreateHooks(vnode, insertedVnodeQueue)
       setScope(vnode)
     } else {
@@ -265,7 +270,8 @@ export function createPatchFunction (backend) {
       // skip all element-related modules except for ref (#3455)
       registerRef(vnode)
       // make sure to invoke the insert hook
-      
+      /* 11-1-16 或者直接往insertedVnodeQueue插入（子组件vnode），这样的话插入过程就是先子后父，也就是说子组件会先插入到队列里面，队列前面是子组件，后面是父组件。
+        因为是要在patch执行完插入子组件 那么子组件逻辑肯定会先执行 */
       insertedVnodeQueue.push(vnode)
     }
   }
@@ -334,6 +340,7 @@ export function createPatchFunction (backend) {
     i = vnode.data.hook // Reuse variable
     if (isDef(i)) {
       if (isDef(i.create)) i.create(emptyNode, vnode)
+      // 11-1-12 判断data力如果定义了hook 就插入到insertedVnodeQueue中
       if (isDef(i.insert)) insertedVnodeQueue.push(vnode)
     }
   }
@@ -606,6 +613,8 @@ export function createPatchFunction (backend) {
       vnode.parent.data.pendingInsert = queue
     } else {
       for (let i = 0; i < queue.length; ++i) {
+        // 11-1-9 遍历queue 执行insert钩子
+        // 11-1-18 插入完成后得知  queue[i] 其实就是每个 vnode
         queue[i].data.hook.insert(queue[i])
       }
     }
@@ -831,7 +840,8 @@ export function createPatchFunction (backend) {
         }
       }
     }
-
+    // 11-1-8 patch最后会调用invokeInsertHook 执行 子组件 mounted
+    // 11-1-10 这个insertedVnodeQueue是在插入过程中不断添加的
     invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch)
     return vnode.elm
   }

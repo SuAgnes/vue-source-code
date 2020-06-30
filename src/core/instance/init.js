@@ -67,10 +67,12 @@ export function initMixin (Vue: Class<Component>) {
     initLifecycle(vm)
     initEvents(vm)
     initRender(vm)
+    // 11-1-3 执行2个生命周期函数 beforeCreate 和 created，beforeCreated是拿不到组件内的数据的，因为data prop等初始化是在initState执行的，所以beforeCreated拿不到，vue-router/vuex是在beforeCreated里混入了一些逻辑
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
     initState(vm)
     initProvide(vm) // resolve provide after data/props
+    // 11-1-4 相对的 created 就可以拿到这些数据 因为在initState执行之后
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -94,6 +96,9 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   const opts = vm.$options = Object.create(vm.constructor.options)
   // 10-1-27 在实例化子组件的时候需要传入父组件的vnode和父组件的vue实例 所以_parentVnode和parent都赋值给opts
   // doing this because it's faster than dynamic enumeration.
+  /* 10-1-28 外部调用场景下的合并配置是通过mergeOption, 并遵循一定的合并策略。组件合并是通过initInternalComponent, 它的合并速度更快（因为简单且没有更多的策略）
+  在子组件的构造函数中，先把大Vue的options 和组件定义的 options 先做一层合并，然后在真正实例化子组件的时候 再把合并的options，也就是sub.options和传入的options（parent/parentVNode）做一层合并*/
+  /* 10-1-29 其实框架、库的设计都是类似的，自身定义了默认配置，同时可以在初始化阶段传入自定义配置，然后通过merge把自定义配置和默认配置做一层合并，以达到定制化不同需求的目的*/
   const parentVnode = options._parentVnode
   opts.parent = options.parent
   opts._parentVnode = parentVnode // parentVnode就是InternalComponentOptions里的_parentVnode

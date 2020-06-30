@@ -69,9 +69,11 @@ const componentVNodeHooks = {
       options.children // new children
     )
   },
-
+  // 11-1-19 在这里定义的insert hook
   insert (vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
+    // 11-1-20 如果子组件没有 _isMounted，就会调用callHook 把子组件实例传给他，也就是说子组件的mounted会优先于父组件，因为子组件的vnode是优先插入到队列里，所以最终patch完成后调用队列钩子函数的时候，子组件的insert钩子会先执行，不过这是不考虑异步组件的情况
+    // 11-2-14 也就是说 首次渲染 这里只会执行mounted 再次重新渲染的时候才会执行updated
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true
       callHook(componentInstance, 'mounted')

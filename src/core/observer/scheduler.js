@@ -68,6 +68,7 @@ if (inBrowser && !isIE) {
 /**
  * Flush both queues and run the watchers.
  */
+// 11-2-2 nextTick时会执行
 function flushSchedulerQueue () {
   currentFlushTimestamp = getNow()
   flushing = true
@@ -86,8 +87,10 @@ function flushSchedulerQueue () {
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
   for (index = 0; index < queue.length; index++) {
+    // 11-2-3 在这时候遍历queue 这个queue实际上每个都是watcher
     watcher = queue[index]
     if (watcher.before) {
+      // 11-2-4 如果watcher有before会先调用before（callHook(vm, 'beforeUpdate')）
       watcher.before()
     }
     id = watcher.id
@@ -112,12 +115,14 @@ function flushSchedulerQueue () {
 
   // keep copies of post queues before resetting state
   const activatedQueue = activatedChildren.slice()
+  // 11-2-5 这个是queue的一个副本。
   const updatedQueue = queue.slice()
 
   resetSchedulerState()
 
   // call component updated and activated hooks
   callActivatedHooks(activatedQueue)
+  // 11-2-6 然后调用callUpdatedHooks
   callUpdatedHooks(updatedQueue)
 
   // devtool hook
@@ -129,10 +134,14 @@ function flushSchedulerQueue () {
 
 function callUpdatedHooks (queue) {
   let i = queue.length
+  // 11-2-7 遍历queue
   while (i--) {
     const watcher = queue[i]
     const vm = watcher.vm
+    // 11-2-8 如果watcher是渲染watcher 并且已mounted过了（也就是第一次不会执行updated），并且数据发生变化后（因为flushSchedulerQueue是数据发生变化后执行），就会执行callHook(vm, 'updated')
     if (vm._watcher === watcher && vm._isMounted && !vm._isDestroyed) {
+      // 11-2-12 所以我们在这里可以判断出如果watcher === _watcher的话，当前的watcher就是渲染watcher，只有渲染watcher才会调用callHook(vm, 'updated')
+      // 11-2-13 _isMounted是在create-component.js的 insert之后
       callHook(vm, 'updated')
     }
   }

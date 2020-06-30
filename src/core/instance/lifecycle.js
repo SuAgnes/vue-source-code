@@ -114,17 +114,19 @@ export function lifecycleMixin (Vue: Class<Component>) {
       vm._watcher.update()
     }
   }
-
+  // 11-3-1 定义 destroy 方法
   Vue.prototype.$destroy = function () {
     const vm: Component = this
     if (vm._isBeingDestroyed) {
       return
     }
+    // 11-3-2 先执行beforeDestroy
     callHook(vm, 'beforeDestroy')
     vm._isBeingDestroyed = true
     // remove self from parent
     const parent = vm.$parent
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+      // 移除父子关系
       remove(parent.$children, vm)
     }
     // teardown watchers
@@ -143,8 +145,12 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // call the last hook...
     vm._isDestroyed = true
     // invoke destroy hooks on current rendered tree
+    // 11-3-4 通过 vm.__patch__(vm._vnode, null) 递归销毁子组件，所以说，beforeDestroy是先父后子，而destroyed也是先子后父
+    // 11-3-5 也就是说父组件先执行$destroy，在执行vm.__patch__(vm._vnode, null)过程中，会执行子组件的$destroy。
+    // 11-3-6 这里和mounted是很类似的
     vm.__patch__(vm._vnode, null)
     // fire destroyed hook
+    // 11-3-3 一系列销毁工作结束后会执行destroyed
     callHook(vm, 'destroyed')
     // turn off all instance listeners.
     vm.$off()
@@ -195,6 +201,8 @@ export function mountComponent (
       }
     }
   }
+  // 11-1-6 在执行mountComponent时，也就是执行挂载的时候会先执行beforeMount（组件挂载前）
+  // 11-1-21 不过 beforeMount 是先父后子 因为在调用mountComponent的时候 是优先执行父组件的mountComponent, 然后才会执行子组件的初始化， 子组件执行后又会调用子组件的mountComponent，所以这个过程是先父后子
   callHook(vm, 'beforeMount')
   // 4-4-6定义的updateComponent最终是一个方法
   let updateComponent
@@ -240,6 +248,7 @@ export function mountComponent (
       这是一个监听到执行的过程，当数据发生变化视图修改，入口也是updateComponent方法 */
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
+        // 11-2-1 这个函数在scheduler执行
         callHook(vm, 'beforeUpdate')
       }
     }
@@ -250,6 +259,7 @@ export function mountComponent (
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
     vm._isMounted = true
+  // 11-1-7 $vnode是父vnode 如果vue实例没有父vnode 说明是根Vnode 根vnode会在这个时机去调用mounted
     callHook(vm, 'mounted')
   }
   return vm
@@ -376,9 +386,11 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+// 11-1-1 执行生命周期函数 第一个参数是组件类型的vue实例 第二个是hook（例如可以传beforeCreated, 就会执行各个阶段的生命周期）
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
+  // 11-1-2 handlers是一个数组 数组每一个元素就是一个生命周期函数
   const handlers = vm.$options[hook]
   const info = `${hook} hook`
   if (handlers) {
