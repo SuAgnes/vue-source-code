@@ -46,6 +46,7 @@ export function initMixin (Vue: Class<Component>) {
 
     // 8-1-4 在此处合并$options, 会把大vue的options会合并到vm.$options上
     // 10-1-3 执行new Vue时会执行这里 因为options._isComponent为false
+    // 12-2-3 在new Vue 时候 会把传入的配置与大Vue做一次合并，合并到vm.$options上
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor), // 10-1-5 这里是大Vue的vm.constructor
         options || {}, // 10-1-6 定义new Vue的时候传入的 new Vue({这里面的})
@@ -89,7 +90,10 @@ export function initMixin (Vue: Class<Component>) {
     }
   }
 }
-
+/* 12-2-2 Sub.options vm.constructor就是Sub，vm.constructor.options就是Sub.options，也就是说Sub.options可以拿到对应的配置，然后赋值给vm.$options
+所以说可以通过vm.$options.components去访问到我们.vue文件里的components，然后就可以resolveAsset到, 然后拿到一个局部组件的定义
+局部注册的组件只能在当前组件下使用，因为扩展是扩展到了Sub.options, 而全局注册则是扩展到Vue.options
+ */
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
   // 10-1-25 vm.constructor是子组件构造器
   // 9-1-8 initInternalComponent 定义了通过vm.constructor去创建一个对象，赋值给vm.$options

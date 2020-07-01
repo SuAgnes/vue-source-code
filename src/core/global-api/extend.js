@@ -48,6 +48,8 @@ export function initExtend (Vue: GlobalAPI) {
     Sub.cid = cid++
     // 把自身配置和Vue的配置做合并
     // 10-1-26 子组件合并
+    // 12-2-1 局部注册会通过mergeOptions把extendOptions和大Vue的options做合并，extendOptions其实就是定义组件的对象
+    // 12-2-4 在子组件初始化过程中，也会通过mergeOptions把大Vue.options和组件定义的options做合并，合并到Sub.options中
     Sub.options = mergeOptions(
       Super.options, // 大Vue的options
       extendOptions // 子组件的options

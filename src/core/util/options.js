@@ -455,6 +455,7 @@ export function mergeOptions (
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
  */
+// 12-1-9 传入vm.$options, vm.$options是根据自定义配置和大Vue.options合并而来的
 export function resolveAsset (
   options: Object,
   type: string,
@@ -465,14 +466,19 @@ export function resolveAsset (
   if (typeof id !== 'string') {
     return
   }
+  // 12-1-10 在assets定义了 this.options[type + 's'][id] = definition，所以可以在这使用，现在是components
   const assets = options[type]
   // check local registration variations first
+  // 12-1-11 如果自身属性有这个id 直接返回。
   if (hasOwn(assets, id)) return assets[id]
+  // 12-1-12 否则尝试转化为驼峰，再通过驼峰去找
   const camelizedId = camelize(id)
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]
+  // 12-1-13 驼峰找不到再找首字母大写的方式
   const PascalCaseId = capitalize(camelizedId)
   if (hasOwn(assets, PascalCaseId)) return assets[PascalCaseId]
   // fallback to prototype chain
+   // 12-1-14 都找不到就尝试从原型上找，原型上找也是先找id → 驼峰 → 首字母大写
   const res = assets[id] || assets[camelizedId] || assets[PascalCaseId]
   if (process.env.NODE_ENV !== 'production' && warnMissing && !res) {
     warn(

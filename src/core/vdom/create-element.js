@@ -112,6 +112,7 @@ export function _createElement (
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       // 如果修饰符用在原生html标签上，并且是开发环境，就会抛出一个警告，说修饰符只在组件上有效
+      // 12-1-7 在渲染vnode时会执行createElement方法，判断如果tag是string，并且是保留标签（html）标签，就创建一个vnode
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
         warn(
           `The .native modifier for v-on is only valid on components but it was used on <${tag}>.`,
@@ -125,12 +126,17 @@ export function _createElement (
       )
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
+      // 12-1-8 否则创建组件vnode
+      /* 12-1-16
+        所以说我们如果通过Vue.components去定义的话，实际上会在Vue.options.components下去扩展了一个定义
+        在resolveAsset的时候，通过tag（写的标签），从而去解析到我们的定义，再把构造器传入createComponent中
+        这样就可以创建一个组件的vnode */
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
-
+      /* 12-1-15 找不到走到这个逻辑 */
       // 6-2-5 陌生节点直接创建一个vnode
       vnode = new VNode(
         tag, data, children,
