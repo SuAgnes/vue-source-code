@@ -36,6 +36,7 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment.
       // 9-1-7 用initInternalComponent去合并
       // 10-1-24 组件初始化时执行 这个vm是子组件实例
+      // 12-3-6 这个options是实例化子组件过程中传入的 parent
       initInternalComponent(vm, options)
     } else {
       /* 3-1-2把我们传入的options最后都合并到$options上

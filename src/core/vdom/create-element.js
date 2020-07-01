@@ -131,6 +131,9 @@ export function _createElement (
         所以说我们如果通过Vue.components去定义的话，实际上会在Vue.options.components下去扩展了一个定义
         在resolveAsset的时候，通过tag（写的标签），从而去解析到我们的定义，再把构造器传入createComponent中
         这样就可以创建一个组件的vnode */
+      /* 12-3-4 这里的createComponent 和 下面的 vnode = createComponent(tag, data, context, children) 有点不同，下面的tag已经是一个对象了，而这里的tag还是字符串
+        我们通过resolveAsset拿到这个组件的构造器，在去执行createComponent
+      */
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements

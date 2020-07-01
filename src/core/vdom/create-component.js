@@ -122,6 +122,7 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 12-3-5 这里就不会满足 所以不会执行extend，因为在执行Vue.component过程中 已经执行了extend，已经从一个对象转化为构造器了
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor) // 8-1-5 用extend方法把我们的对象转化成一个新的构造器
   }

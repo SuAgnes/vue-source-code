@@ -184,12 +184,15 @@ LIFECYCLE_HOOKS.forEach(hook => {
  * a three-way merge between constructor options, instance
  * options and parent options.
  */
+
+// 12-3-1 对于静态类型的合并策略（ASSET_TYPES）是调用mergeAssets方法
 function mergeAssets (
   parentVal: ?Object,
   childVal: ?Object,
   vm?: Component,
   key: string
 ): Object {
+  // 12-3-2 通过Object.create创建出一个对象，把parentVal传入当作原形传入
   const res = Object.create(parentVal || null)
   if (childVal) {
     process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
@@ -445,6 +448,7 @@ export function mergeOptions (
   // 10-1-14 通过strats拿到不同的start函数 strats其实是很多个不同的合并策略
     const strat = strats[key] || defaultStrat
     // 10-1-18 每个key对应了生命周期 最终会把生命周期的每个key作为options的key, 然后通过生命周期的合并策略函数合并处理的结果 类型是array-function
+    // 12-3-3 在这个时候执行mergeAsset
     options[key] = strat(parent[key], child[key], vm, key)
   }
   return options
