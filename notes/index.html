@@ -47,12 +47,15 @@
         //     },
         //     template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
         // })
+        /* 异步组件 13-1-0 */
+        // 工厂函数
         Vue.component('HelloWorld', function (resolve, reject){
             require(['./HelloWorld.vue'], function(res) {
                 resolve(res);
             })
         })
-        
+        // Promise webpack2+ import() 这种方式（语法糖）会返回一个promise
+        Vue.component('HelloWorld', () => import('./HelloWord.vue'))
         var app = new Vue({
             el: '#app',
             data: {

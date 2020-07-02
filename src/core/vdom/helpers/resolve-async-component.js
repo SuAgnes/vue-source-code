@@ -107,6 +107,7 @@ export function resolveAsyncComponent (
     const resolve = once((res: Object | Class<Component>) => {
       // cache resolved
       // 13-1-21 把返回的异步组件保存下来，
+      // 13-2-3 在resolved执行时，仍然可以通过res拿到对象，并转化为构造器，之后逻辑就相同了
       factory.resolved = ensureCtor(res, baseCtor)
       // invoke callbacks only if this is not a synchronous resolve
       // (async resolves are shimmed as synchronous during SSR)
@@ -130,11 +131,12 @@ export function resolveAsyncComponent (
     })
     // 13-1-13 factory加载异步组件
     const res = factory(resolve, reject)
-
+    // 13-2-1  13-1-13 之前都是一样的逻辑 不同的是 执行完13-1-13 会返回一个promise对象，所以会执行这里面
     if (isObject(res)) {
       if (isPromise(res)) {
         // () => Promise
         if (isUndef(factory.resolved)) {
+          // 13-2-2 执行then 传入resolve, reject
           res.then(resolve, reject)
         }
       } else if (isPromise(res.component)) {
