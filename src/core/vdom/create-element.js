@@ -124,6 +124,7 @@ export function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
+      // 13-1-4 resolveAsset
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       // 12-1-8 否则创建组件vnode
@@ -134,6 +135,7 @@ export function _createElement (
       /* 12-3-4 这里的createComponent 和 下面的 vnode = createComponent(tag, data, context, children) 有点不同，下面的tag已经是一个对象了，而这里的tag还是字符串
         我们通过resolveAsset拿到这个组件的构造器，在去执行createComponent
       */
+    //  13-1-5 执行createComponent，这个ctor是一个工厂函数
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements

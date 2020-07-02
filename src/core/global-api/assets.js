@@ -21,17 +21,17 @@ export function initAssetRegisters (Vue: GlobalAPI) {
         if (process.env.NODE_ENV !== 'production' && type === 'component') {
           validateComponentName(id)
         }
-        // 12-1-3 判断如果是component方法 并且是一个普通对象
+        // 12-1-3 13-1-1 判断如果是component方法 并且是一个普通对象
         if (type === 'component' && isPlainObject(definition)) {
           // 12-1-4 如果没有name, 以id为准
           definition.name = definition.name || id
-          // 12-1-5 通过extend 转换成构造器
+          // 12-1-5 13-1-2 通过extend 转换成构造器
           definition = this.options._base.extend(definition)
         }
         if (type === 'directive' && typeof definition === 'function') {
           definition = { bind: definition, update: definition }
         }
-        // 12-1-6 执行完后，会把构造器赋值给this.options.components.id，也就是对全局大Vue扩展了一些定义
+        // 12-1-6 13-1-3 执行完后，会把构造器赋值给this.options.components.id，也就是对全局大Vue扩展了一些定义
         this.options[type + 's'][id] = definition
         return definition
       }

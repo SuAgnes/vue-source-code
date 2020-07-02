@@ -8,9 +8,7 @@
 </head>
 <body>
 <div id="app">
-    <div id="components-demo">
-        <button-counter></button-counter>
-    </div>
+    <hello-world></hello-world>
 </div>
         <script src="../dist/vue.js"></script>
         <script type="text/javascript">
@@ -41,14 +39,20 @@
         //     }
         // }
         // })
-        Vue.component('button-counter', {
-            data: function () {
-                return {
-                count: 0
-                }
-            },
-            template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+        // Vue.component('button-counter', {
+        //     data: function () {
+        //         return {
+        //         count: 0
+        //         }
+        //     },
+        //     template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+        // })
+        Vue.component('HelloWorld', function (resolve, reject){
+            require(['./HelloWorld.vue'], function(res) {
+                resolve(res);
+            })
         })
+        
         var app = new Vue({
             el: '#app',
             data: {
@@ -56,6 +60,7 @@
                 // list: [1, 2, 3]
             },
         })
+
         // </script>
 
 </body>

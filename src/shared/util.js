@@ -334,6 +334,7 @@ export function looseIndexOf (arr: Array<mixed>, val: mixed): number {
  */
 export function once (fn: Function): Function {
   let called = false
+  // 13-1-12 在闭包外定义一个变量，在第一次执行的时候变成true，第二次执行时判断非true再执行，因为使用异步组件的话也只能resolve一次，相当于保护了我们的resolve方法
   return function () {
     if (!called) {
       called = true

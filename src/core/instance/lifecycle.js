@@ -107,7 +107,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // updated hook is called by the scheduler to ensure that children are
     // updated in a parent's updated hook.
   }
-
+  // 13-1-24 这个方法其实就是调用渲染watcher.update()
   Vue.prototype.$forceUpdate = function () {
     const vm: Component = this
     if (vm._watcher) {
@@ -231,8 +231,10 @@ export function mountComponent (
       // 6-3-1 第一个参数就是刚刚调用_createElement的返回值，update把vnode生成为真实的dom
       vm._update(vm._render(), hydrating)
       /*  4-5-7 开始执行 vm._update(vm._render(), hydrating) 这两个函数就是最终挂载dom需要用的函数
-        先执行render,render生成一个vnode，然后调update，把vnode传入进去 */
-
+      先执行render,render生成一个vnode，然后调update，把vnode传入进去 */
+      /* 13-1-25 也就是说 通过forceUpdate强制调用渲染函数，因为我们不能保证异步组件加载过程中数据发生变化，因为当组件内数据发生变化的话就会渲染，如果没有数据变化的话，实际上不会去渲染，所以我们需要强制渲染
+        强制渲染后又会执行vm._render() 然后执行到createdComponent
+      */
     }
   }
 

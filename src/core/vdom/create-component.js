@@ -123,6 +123,7 @@ export function createComponent (
 
   // plain options object: turn it into a constructor
   // 12-3-5 这里就不会满足 所以不会执行extend，因为在执行Vue.component过程中 已经执行了extend，已经从一个对象转化为构造器了
+  // 13-1-6 因为Ctor是函数所以不满足条件
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor) // 8-1-5 用extend方法把我们的对象转化成一个新的构造器
   }
@@ -140,10 +141,15 @@ export function createComponent (
   // async component
   // 8-2-2 异步组件逻辑
   let asyncFactory
+  // 13-1-7 因为是工厂函数所以也没有cid，所以满足逻辑，加载异步组件
   if (isUndef(Ctor.cid)) {
+    // 13-1-26 发现没有cid 还会执行resolveAsyncComponent
     asyncFactory = Ctor
+    // 13-1-8 asyncFactory 工厂函数、baseCtor是大Vue
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor)
+      // 13-1-28 返回构造器后 就不再是 undefined，之后可以执行同步组件过程，最后会正确patch出组件
     if (Ctor === undefined) {
+      // 13-1-15 判断是undefined 执行createAsyncPlaceholder
       // return a placeholder node for async component, which is rendered
       // as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
