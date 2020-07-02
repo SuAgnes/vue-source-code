@@ -54,10 +54,13 @@ export function resolveAsyncComponent (
   factory: Function,
   baseCtor: Class<Component>
 ): Class<Component> | void {
+
+  // 13-3-15 error优先级非常高，所以当 factory.error 为 true 时，直接渲染error组件
   if (isTrue(factory.error) && isDef(factory.errorComp)) {
     return factory.errorComp
   }
   // 13-1-27 此时执行，会发现factory.resolved为true 13-1-21时做的保留
+  // 13-3-10 调用forceRender会执行到这里，如果发现没有factory.resolved，就会发现有loading
   if (isDef(factory.resolved)) {
     return factory.resolved
   }
@@ -70,7 +73,7 @@ export function resolveAsyncComponent (
 
     factory.owners.push(owner)
   }
-
+  // 13-3-11 那就return loading组件
   if (isTrue(factory.loading) && isDef(factory.loadingComp)) {
     return factory.loadingComp
   }
@@ -119,11 +122,13 @@ export function resolveAsyncComponent (
       }
     })
 
+    // 13-3-13 reject函数首先会抛出警告
     const reject = once(reason => {
       process.env.NODE_ENV !== 'production' && warn(
         `Failed to resolve async component: ${String(factory)}` +
         (reason ? `\nReason: ${reason}` : '')
       )
+      // 13-3-14 如果发现定义了错误组件会把 factory.error 设为true
       if (isDef(factory.errorComp)) {
         factory.error = true
         forceRender(true)
@@ -140,27 +145,33 @@ export function resolveAsyncComponent (
           res.then(resolve, reject)
         }
       } else if (isPromise(res.component)) {
+        // 13-3-1 拥有component，并且component是promise，然后调用then加载异步组件
         res.component.then(resolve, reject)
-
+        // 13-3-2 如果定义了error 去扩展errorComp，使用ensureCtor为了确保是构造器
         if (isDef(res.error)) {
           factory.errorComp = ensureCtor(res.error, baseCtor)
         }
 
         if (isDef(res.loading)) {
+        // 13-3-3 loading同error
           factory.loadingComp = ensureCtor(res.loading, baseCtor)
           if (res.delay === 0) {
+          // 13-3-4 如果delay为0 loading会直接转，这里影响了返回值
             factory.loading = true
           } else {
+            // 13-3-6 使用setTimeout
             timerLoading = setTimeout(() => {
               timerLoading = null
+              // 13-3-8 如果factory.resolved（组件）和factory.error没有加载成功，就会去渲染loading
               if (isUndef(factory.resolved) && isUndef(factory.error)) {
                 factory.loading = true
+                // 13-3-9 调用forceRender触发渲染
                 forceRender(false)
               }
             }, res.delay || 200)
           }
         }
-
+        // 13-3-12 如果有timeout 那我们判断如果过了这个时间发现还没有resolved 就调用reject
         if (isDef(res.timeout)) {
           timerTimeout = setTimeout(() => {
             timerTimeout = null
@@ -180,8 +191,15 @@ export function resolveAsyncComponent (
     // 13-1-14 加载到这会返回undefined
 
     // return in case resolved synchronously
+    // 13-3-5 如果有loading 就直接返回factory.loadingComp，也就是说createComponent的返回值不再是undefined，而是直接渲染loading组件
+    // 13-3-7 如果有delay的话，因为setTimeout是异步，所以loading不存在 依旧会返回undefined，undefined第一次会渲染注释节点
     return factory.loading
       ? factory.loadingComp
       : factory.resolved
   }
 }
+
+/* 13-4-0 总结
+  异步组件执行的其实是2次渲染，（有loading情况等除外，如果有就是2次以上渲染）
+  先渲染成注释节点，当组件加载成功后，在通过forceRender()重新渲染
+*/
