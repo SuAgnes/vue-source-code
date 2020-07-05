@@ -70,7 +70,7 @@ export function initState (vm: Component) {
     initWatch(vm, opts.watch)
   }
 }
-
+ 
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
@@ -80,6 +80,7 @@ function initProps (vm: Component, propsOptions: Object) {
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
+    // 14-1-10 非root 设为false
     toggleObserving(false)
   }
   for (const key in propsOptions) {
@@ -95,6 +96,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 14-1-1 把props的key变成响应式的
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -126,6 +128,7 @@ function initData (vm: Component) {
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+  // 14-1-2 判断不是一个对象
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -133,8 +136,10 @@ function initData (vm: Component) {
       'https://vuejs.org/v2/guide/components.html#data-Must-Be-a-Function',
       vm
     )
+
   }
   // proxy data on instance
+  // 14-1-3 遍历key
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
@@ -161,10 +166,12 @@ function initData (vm: Component) {
       )
     } else if (!isReserved(key)) {
       // 3-2-5 为什么在vue里可以使用this 互相调用data或者methods等等呢，就是通过这个代理
+      // 14-1-4 把data上的东西代理到vm实例上
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  // 14-1-5 观测data
   observe(data, true /* asRootData */)
 }
 

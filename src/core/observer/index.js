@@ -25,6 +25,7 @@ const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
 export let shouldObserve: boolean = true
 
 export function toggleObserving (value: boolean) {
+  // 14-1-9 这里可以改变shouldObserve
   shouldObserve = value
 }
 
@@ -34,6 +35,7 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// 14-1-13 可以把这个Observer理解为观察者
 export class Observer {
   value: any;
   dep: Dep;
@@ -43,7 +45,9 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 14-1-15 def其实就是为了给目标value 去添加一个__ob__, 然后属性指向当前实例 为的就是下次再对同样的对象做处理时直接返回 见14-1-8
     def(value, '__ob__', this)
+    // 14-1-16 value 可以是数组也可以是对象
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
@@ -52,6 +56,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
+      // 14-1-18 对象调用walk方法
       this.walk(value)
     }
   }
@@ -61,6 +66,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
+  // 14-1-19 遍历对象上的所有属性 调用defineReactive 使用14-1-15这种方式封装一层的意义也在这，因为__ob__没有修改的必要，所以直接变成不可枚举属性，所以并不会在walk的时候调用defineReactive，defineReactive就是把对象属性变成响应式
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -71,6 +77,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
+  // 14-1-17 遍历了数组的每个元素 然后调用observe递归观察起来
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
@@ -107,20 +114,26 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
+
+// 14-1-6 两个参数 一个值 以及是否是跟数据
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // 14-1-7 如果不是object 或者是vnode return
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
+  // 14-1-8 判断是否有_ob___这个属性，如果有并且是observer的实例 就直接取__ob__
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
     shouldObserve &&
+    // 14-1-12 非serverRendering 并且是数组或对象 并且对象是可扩展属性的 最后判断不是vue vue实例的_isVue是true
     !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 14-1-11 shouldObserve就是用来控制是否要执行new Observer
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -133,6 +146,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
  * Define a reactive property on an Object.
  */
 export function defineReactive (
+  // 14-1-20 参数：对象，对象属性值，初始值
   obj: Object,
   key: string,
   val: any,
@@ -141,22 +155,28 @@ export function defineReactive (
 ) {
   const dep = new Dep()
 
+  // 14-1-21 通过getOwnPropertyDescriptor拿到对象属性的定义 如果这个属性的configurable是false就return
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
 
   // cater for pre-defined getter/setters
+  // 14-1-22 如果有get和set就拿到
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
+    // 14-1-23 如果没有getter 或者有setter 并且参数长度是2，就把obj[key] 赋值给val
     val = obj[key]
   }
 
+  // 14-1-24 子observer会再次递归调用observe 也就是当对象的某个的属性值是一个对象的话，就会递归的把整个东西都监听一遍，最终会把对象属性变成响应式对象
   let childOb = !shallow && observe(val)
+  // 14-1-27  get和set在定义时都不会执行，只有当访问和赋值的时候才执行
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
+    // 14-1-25 访问时会触发get 主要做一些依赖收集
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
@@ -170,6 +190,7 @@ export function defineReactive (
       }
       return value
     },
+    // 14-1-26 设置值会触发set 用来派发更新
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */

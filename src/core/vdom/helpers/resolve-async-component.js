@@ -202,4 +202,8 @@ export function resolveAsyncComponent (
 /* 13-4-0 总结
   异步组件执行的其实是2次渲染，（有loading情况等除外，如果有就是2次以上渲染）
   先渲染成注释节点，当组件加载成功后，在通过forceRender()重新渲染
+
+  异步组件的3种实现方式中，高级异步组件的设计非常窍门，它可以通过简单的配置实现loading resolve reject timeout 4种状态
+
+  promise设计配合了webpagk的import
 */

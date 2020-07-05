@@ -18,6 +18,7 @@ export function isReserved (str: string): boolean {
 /**
  * Define a property.
  */
+// 14-1-14 定义def def对defineProperty做了一层封装
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
   Object.defineProperty(obj, key, {
     value: val,
