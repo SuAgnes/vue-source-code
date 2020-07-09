@@ -83,6 +83,7 @@ export default class Watcher {
     // parse expression for getter
     // 4-5-4 判断expOrFn如果是函数，如果是就把watcher的getter赋值给这个函数
     if (typeof expOrFn === 'function') {
+    // 15-1-11 对应updateComponent
       this.getter = expOrFn
     } else {
       // 4-5-5 否则调用parsePath转化一下expOrFn
@@ -105,12 +106,15 @@ export default class Watcher {
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
+  // 15-1-12 用ger对watcher做求值
   get () {
-    pushTarget(this)
+    // 15-1-14 在执行getter前 会通过pushTarget把当前的渲染wathcer作为当前计算中的wathcer
+    pushTarget(this) 
     let value
     const vm = this.vm
     try {
       // 4-5-6 在这里调用getter，也就是执行updateComponent的方法
+      // 15-1-15 在这里调用getter，也就是执行updateComponent的方法 updateComponent 执行时又会执行vm.render
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -122,9 +126,12 @@ export default class Watcher {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
+        // 15-1-19 dep-watcher逻辑
         traverse(value)
       }
+      // 15-1-20 渲染watcher执行完后回popTarget 来恢复上一次正在计算的target
       popTarget()
+      // 15-1-21 清除一些依赖收集 因为每次重新渲染（数据改变时），每次数据渲染都会访问render，在访问render过程中都会重新调用addDep
       this.cleanupDeps()
     }
     return value
@@ -133,12 +140,14 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
-  addDep (dep: Dep) {
+    addDep (dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
+      // 15-1-27 newDeps在每次执行add时都会新增
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
+        // 15-1-17 如果newDepIds 和 depIds都没有id 就会执行dep.addSub(this)
         dep.addSub(this)
       }
     }
@@ -149,17 +158,27 @@ export default class Watcher {
    */
   cleanupDeps () {
     let i = this.deps.length
+    // 15-1-22 调用addDep过程中就会在这里执行清除操作
     while (i--) {
+      /* 15-1-29 下一次就把deps移除一遍 因为在添加dep的时候 如果不执行cleanupdeps 假如页面上没有使用到msg数据（这个数据v-if=false状态） 即使不渲染 还是会执行updateComponent
+        因为每次执行cleanupDeps时会把所有dep做一次remove，每次渲染都会执行addSub 在addSub之前 addDep时会判断保证不会重复去添加旧的，但是之前已有的，不去清除 会一直在里面，当我们修改数据时 就会触发notify访问sub[i].update(), 也就是会触发重新渲染
+        cleanupDeps很大的一个作用就是把所有的dep和newDepIds做一次比对，例如刚刚提到的v-if为false的msg, 在执行render时 是不会去订阅msg的变化，也就是说render过程中完全不会访问msg，所以不会有对msg属性收集依赖，在新的一轮完全不会对msg做订阅，一旦不订阅，newDepIds就不会有之前的dep。
+        发现新的一轮没有订阅msg，但是老的订阅过，就会把订阅移除，再做一层交换保留之前的15-1-28，再把新的清除，就能保证没有订阅的变化不会触发重新渲染，其实就是一个性能上的提升。
+        */ 
       const dep = this.deps[i]
+      // 15-1-24 首先拿到已有的deps，判断如果有就remove掉 这一步第一次肯定不会执行 因为第一次deps的length为空
       if (!this.newDepIds.has(dep.id)) {
         dep.removeSub(this)
       }
     }
+    // 15-1-25 交换depids 和 this.newDepIds
     let tmp = this.depIds
     this.depIds = this.newDepIds
     this.newDepIds = tmp
+    // 15-1-28 新增后保留到deps和depids中，然后再在newdepids中做clear 也就是每次都是把新的用depids保留 再清空
     this.newDepIds.clear()
     tmp = this.deps
+    // 15-1-26 deps 也是对newDeps的保留 也就是说deps和depids是保留之前的东西
     this.deps = this.newDeps
     this.newDeps = tmp
     this.newDeps.length = 0

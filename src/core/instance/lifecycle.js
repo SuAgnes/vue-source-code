@@ -244,7 +244,8 @@ export function mountComponent (
 
   /* 4-5-1 调用了一个new Watcher执行updateComponent，这是一个渲染watcher（响应式原理相关，观察者模式）
     调用new Watcher时候，第一个参数是vue实例，第二个是函数，第三个noop其实就是空函数，第四个是配置对象，第五个是Boolean*/
-  new Watcher(vm, updateComponent, noop, {
+    // 15-1-10 updateComponent其实是作为渲染watcher的getter传入的 当mountComponent的时候就会实例化一个渲染watcher
+    new Watcher(vm, updateComponent, noop, {
     /* 4-5-8 通过watcher使用updateComponent是因为updateComponent方法实际上就是执行了一次真实的渲染
       真实的渲染过程除了首次渲染，之后在更新数据的时候还是会触发渲染watcher，再次执行updateComponent方法
       这是一个监听到执行的过程，当数据发生变化视图修改，入口也是updateComponent方法 */

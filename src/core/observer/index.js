@@ -153,6 +153,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  //  15-1-7 定义dep
   const dep = new Dep()
 
   // 14-1-21 通过getOwnPropertyDescriptor拿到对象属性的定义 如果这个属性的configurable是false就return
@@ -172,16 +173,20 @@ export function defineReactive (
 
   // 14-1-24 子observer会再次递归调用observe 也就是当对象的某个的属性值是一个对象的话，就会递归的把整个东西都监听一遍，最终会把对象属性变成响应式对象
   let childOb = !shallow && observe(val)
-  // 14-1-27  get和set在定义时都不会执行，只有当访问和赋值的时候才执行
+  // 14-1-27  get和set在定义时都不会执行，只有当访问和赋值的时候才执行 并且vue会把props data 等全变成响应式对象
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     // 14-1-25 访问时会触发get 主要做一些依赖收集
     get: function reactiveGetter () {
+      // 15-1-1 首先拿到getter 如果没有getter就直接取val
       const value = getter ? getter.call(obj) : val
+      // 15-1-2 依赖手机
       if (Dep.target) {
+        // 15-1-3 Dep是一个类 主要建立数据和watcher的桥梁
         dep.depend()
         if (childOb) {
+          // 15-1-9 如果子value是一个对象 并且有childOb 就调用 childOb.dep.depend()
           childOb.dep.depend()
           if (Array.isArray(value)) {
             dependArray(value)
@@ -190,6 +195,7 @@ export function defineReactive (
       }
       return value
     },
+    // 15-1-23 其实依赖收集就是在触发getter后，会把watcher订阅到数据变化中，也就是说dep.depend()会调用当前watcher的addDep，addDep最终会调用addSub来push watcher。也就是说依赖收集其实就是收集当前计算的watcher，然后把watcher作为一个订阅者，订阅者的作用是之后在数据做修改的时候会触发setter，会通知订阅者做一些逻辑
     // 14-1-26 设置值会触发set 用来派发更新
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
@@ -295,3 +301,9 @@ function dependArray (value: Array<any>) {
     }
   }
 }
+
+
+/* 15-1-30 总结：
+依赖收集就是订阅数据变化的wathcer的收集
+依赖收集的目的是为了当响应式数据发送变化触发setter的时候，能知道应该通知哪些订阅者（watcher）去做响应的逻辑处理
+ */

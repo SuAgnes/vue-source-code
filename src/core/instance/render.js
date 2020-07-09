@@ -111,7 +111,8 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
-    // 9-2-7 调用render.call 生成渲染vnode
+      // 9-2-7 调用render.call 生成渲染vnode
+      // 15-1-16 在这一步就会访问到定义在模板中的数据，就能访问到这些数据的getter了 也就是说render期间就可以访问到getter
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       // ...
