@@ -45,6 +45,7 @@ export default class Dep {
       // order
       subs.sort((a, b) => a.id - b.id)
     }
+    // 15-2-6 遍历订阅者（所有订阅数据变化的watcher），然后调用update()方法
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update()
     }

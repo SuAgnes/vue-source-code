@@ -115,6 +115,7 @@ export default class Watcher {
     try {
       // 4-5-6 在这里调用getter，也就是执行updateComponent的方法
       // 15-1-15 在这里调用getter，也就是执行updateComponent的方法 updateComponent 执行时又会执行vm.render
+      // 15-2-26 执行get 会再次执行getter
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -188,11 +189,11 @@ export default class Watcher {
    * Subscriber interface.
    * Will be called when a dependency changes.
    */
-  update () {
+  update () { 
     /* istanbul ignore else */
     if (this.lazy) {
       this.dirty = true
-    } else if (this.sync) {
+    } else if (this.sync) { //15-2-7 是否是同步watcher
       this.run()
     } else {
       queueWatcher(this)
@@ -205,6 +206,7 @@ export default class Watcher {
    */
   run () {
     if (this.active) {
+      // 15-2-23 通过this.get()再次求值，然后作对比，如果发现值不同，或者是个对象，或者是deppwatcher的话，就会执行if中的内容
       const value = this.get()
       if (
         value !== this.value ||
@@ -217,6 +219,7 @@ export default class Watcher {
         // set new value
         const oldValue = this.value
         this.value = value
+      // 15-2-24 判断是否是userWatcher
         if (this.user) {
           try {
             this.cb.call(this.vm, value, oldValue)
@@ -224,6 +227,7 @@ export default class Watcher {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)
           }
         } else {
+        // 15-2-25 对于渲染watcher 而言，cb是一个空函数，只是对this.get()求值, 但是userwatcher的时候，cb就是watch{ msg(){ xxx }} 里写的msg函数
           this.cb.call(this.vm, value, oldValue)
         }
       }

@@ -198,8 +198,10 @@ export function defineReactive (
     // 15-1-23 其实依赖收集就是在触发getter后，会把watcher订阅到数据变化中，也就是说dep.depend()会调用当前watcher的addDep，addDep最终会调用addSub来push watcher。也就是说依赖收集其实就是收集当前计算的watcher，然后把watcher作为一个订阅者，订阅者的作用是之后在数据做修改的时候会触发setter，会通知订阅者做一些逻辑
     // 14-1-26 设置值会触发set 用来派发更新
     set: function reactiveSetter (newVal) {
+      // 15-2-1 首先求值，然后和新值做对比。
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+      // 15-2-2 修改后值相同那么说明都不做
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -209,12 +211,16 @@ export function defineReactive (
       }
       // #7981: for accessor properties without setter
       if (getter && !setter) return
+      
       if (setter) {
+        // 15-2-3 不同的话会赋新值
         setter.call(obj, newVal)
       } else {
         val = newVal
       }
+      // 15-2-4 如果新值也是一个对象 那么会重新observe把这个对象变成响应式
       childOb = !shallow && observe(newVal)
+      // 15-2-5 派发更新
       dep.notify()
     }
   })
@@ -306,4 +312,4 @@ function dependArray (value: Array<any>) {
 /* 15-1-30 总结：
 依赖收集就是订阅数据变化的wathcer的收集
 依赖收集的目的是为了当响应式数据发送变化触发setter的时候，能知道应该通知哪些订阅者（watcher）去做响应的逻辑处理
- */
+*/
