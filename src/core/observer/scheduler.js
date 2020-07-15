@@ -229,7 +229,13 @@ export function queueWatcher (watcher: Watcher) {
 /* 15-2-34 派发更新就是通知watcher去updete，updete会执行queueWatcher，queueWatcher又会在NickTick中执行flushSchedulerQueue
   flushSchedulerQueue过程中执行watcher.run(), watcher.run() 会执行getter，然后在执行getter过程中会再次重新渲染组件，这就是数据变化到dom变化，也就是派发更新的过程。
   
-  当触发数据变化，组件会重新渲染，当定义user-watcher时候，user watcher去观测数据变化，当数据发生变化，user watcher的回调也会执行
+  15-2-36 当触发数据变化，组件会重新渲染，当定义user-watcher时候，user watcher去观测数据变化，当数据发生变化，user watcher的回调也会执行
   这就是派发更新的过程，响应式对象 依赖收集到派发更新 就可以了解为什么修改数据后可以自动修改视图 因为在第一次渲染的时候订阅了这些数据变化
   就是负责渲染视图的watcher去订阅了数据变化，然后一旦修改了数据，订阅数据的渲染watcher就会收到通知，就会更新，更新后就会重新渲染，整个就是一个自动化的流程
+
+  总结：
+
+  派发更新是当数据发生改变后，通知所有订阅了数据变化的watcher执行update
+
+  （优化）派发更新的过程中会把所有要执行update的watcher推入到队列中，但是对同一个watcher不会重复执行，更新是在nextTike后统一执行flush，好处就是不会多次执行异步
 */
