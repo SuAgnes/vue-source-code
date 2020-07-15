@@ -45,6 +45,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
 // 2-4-2 其他方法
   Vue.set = set
   Vue.delete = del
+  // 16-1-3 调用3 赋值给Vue的nextTick
   Vue.nextTick = nextTick
 
   // 2.6 explicit observable API
