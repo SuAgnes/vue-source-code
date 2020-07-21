@@ -48,8 +48,10 @@ export class Observer {
     // 14-1-15 def其实就是为了给目标value 去添加一个__ob__, 然后属性指向当前实例 为的就是下次再对同样的对象做处理时直接返回 见14-1-8
     def(value, '__ob__', this)
     // 14-1-16 value 可以是数组也可以是对象
+    // 17-2-1 数组可以调用push 或者 splice等方法更新的逻辑 
     if (Array.isArray(value)) {
       if (hasProto) {
+        // 17-2-4 大部分浏览器都支持原型链 就是把数组value的原型链指向arrayMethods
         protoAugment(value, arrayMethods)
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
@@ -93,6 +95,7 @@ export class Observer {
  */
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
+  // 17-2-2 把target的原型链指向src
   target.__proto__ = src
   /* eslint-enable no-proto */
 }
@@ -104,6 +107,7 @@ function protoAugment (target, src: Object) {
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
   for (let i = 0, l = keys.length; i < l; i++) {
+  // 17-2-3 遍历key 拿到每个key再通过def把target key 指向 src[key] 是一个拷贝过程
     const key = keys[i]
     def(target, key, src[key])
   }
@@ -170,7 +174,6 @@ export function defineReactive (
     // 14-1-23 如果没有getter 或者有setter 并且参数长度是2，就把obj[key] 赋值给val
     val = obj[key]
   }
-
   // 14-1-24 子observer会再次递归调用observe 也就是当对象的某个的属性值是一个对象的话，就会递归的把整个东西都监听一遍，最终会把对象属性变成响应式对象
   let childOb = !shallow && observe(val)
   // 14-1-27  get和set在定义时都不会执行，只有当访问和赋值的时候才执行 并且vue会把props data 等全变成响应式对象
@@ -185,8 +188,10 @@ export function defineReactive (
       if (Dep.target) {
         // 15-1-3 Dep是一个类 主要建立数据和watcher的桥梁
         dep.depend()
+        /* 17-1-13 如果有childOb 就调用 childOb.dep.depend() 去收集依赖 其实就是订阅了渲染watcher
+        也可以说渲染watcher订阅了dep的变化 dep会通知渲染watcher重新做渲染 dep通知渲染的时候就是调用set方法的时候 childOb解见 14-1-24 */
         if (childOb) {
-          // 15-1-9 如果子value是一个对象 并且有childOb 就调用 childOb.dep.depend()
+          // 15-1-9 如果子value是一个对象 并且有childOb 就调用 childOb.dep.depend() 
           childOb.dep.depend()
           if (Array.isArray(value)) {
             dependArray(value)
@@ -231,22 +236,31 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
+// 17-1-2 set实现 target可以是数组也可以是对象，key可以是对象的key也可以是数组下标
 export function set (target: Array<any> | Object, key: any, val: any): any {
+  // 17-1-3 target 在开发环境 如果是undefined或者是基础类型 都会抛出警告
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  // 17-1-4 判断是数组 并且索引也是正确的
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 17-1-5 首先修改数组长度 以及key的最大值
     target.length = Math.max(target.length, key)
+    // 17-1-6 然后用splice插入
     target.splice(key, 1, val)
     return val
   }
+  // 17-1-7 对象逻辑 判断target里有key 并且key不在原型上 如果已存在就可以直接赋值（因为可以触发渲染）
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
+
+  // 17-1-8 否则就尝试取到__ob__这个属性（响应式对象有__ob__属性）
   const ob = (target: any).__ob__
+  // 17-1-9 判断target是一个vue实例 或者 ob有vmCount（ob.vmCount意味是root $data也就是根数据对象）满足任何一个都报错
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -254,11 +268,14 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  // 17-1-10 判断target如果不是响应式对象 就是普通对象的话 也直接赋值就可以
   if (!ob) {
     target[key] = val
     return val
   }
+  // 17-1-11 如果都不满足 走defineReactive，首先把新增加的key的value变成响应式
   defineReactive(ob.value, key, val)
+  // 17-1-12 手动通知
   ob.dep.notify()
   return val
 }
