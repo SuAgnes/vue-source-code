@@ -64,6 +64,7 @@ export function initExtend (Vue: GlobalAPI) {
     if (Sub.options.props) {
       initProps(Sub)
     }
+    // 18-1-25 其实在执行Vue.extend过程中（创建子组件构造器过程中），如果构造器属性上有computed属性，就会执行initComputed
     if (Sub.options.computed) {
       initComputed(Sub)
     }
@@ -109,7 +110,10 @@ function initProps (Comp) {
 
 function initComputed (Comp) {
   const computed = Comp.options.computed
+  // 18-1-26 initComputed 遍历了 computed 提前调用了defineComputed
   for (const key in computed) {
+    // 18-1-27 此时的第一个参数（target) 不是Vue实例，而是组件的原型
     defineComputed(Comp.prototype, key, computed[key])
   }
 }
+// 18-1-29 在原型上定义是为了给组件做共享，这样不用每次实例组件都去给实例上定义getter

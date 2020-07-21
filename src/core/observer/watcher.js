@@ -51,18 +51,20 @@ export default class Watcher {
     isRenderWatcher?: boolean 
   ) {
     this.vm = vm
+    // 18-1-12 computed逻辑 renderWatcher肯定是false
     if (isRenderWatcher) {
       // 4-5-3 isRenderWatcher传true的话在vm上加一个_watcher 
       // 11-2-10 如果是渲染watcher就会把当前watcher 赋值给 vm._watcher，所以vue的_watcher表示了一个渲染watcher
       vm._watcher = this
     }
     // 11-2-11 同时push到_watchers中
+    // 18-1-13 computedWatcher也会push到这里
     vm._watchers.push(this)
     // options
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
-      this.lazy = !!options.lazy
+      this.lazy = !!options.lazy // 18-1-14 刚刚配置时 lazy: true, 所以此处也是true
       this.sync = !!options.sync
       // 11-2-9 在创建watcher时会保存before
       this.before = options.before
@@ -72,6 +74,7 @@ export default class Watcher {
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
+    // 18-1-15 dirty也是true
     this.dirty = this.lazy // for lazy watchers
     this.deps = []
     this.newDeps = []
@@ -85,6 +88,7 @@ export default class Watcher {
     if (typeof expOrFn === 'function') {
     // 15-1-11 对应updateComponent
       this.getter = expOrFn
+      // 18-1-17 对应赋值给watcher的this.getter
     } else {
       // 4-5-5 否则调用parsePath转化一下expOrFn
       this.getter = parsePath(expOrFn)
@@ -98,6 +102,7 @@ export default class Watcher {
         )
       }
     }
+    // 18-1-18 如果lazy = true， this.value 为空 computed创建过程中并不会求值，到此处就结束了
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -116,6 +121,9 @@ export default class Watcher {
       // 4-5-6 在这里调用getter，也就是执行updateComponent的方法
       // 15-1-15 在这里调用getter，也就是执行updateComponent的方法 updateComponent 执行时又会执行vm.render
       // 15-2-26 执行get 会再次执行getter
+      /* 18-1-22 也就是说会调用get方法去求值，求值过程中就会触发getter( 因为computed会依赖一些data 或者另外的computed，所以在求值过程中，触发别的值的getter就会收集依赖，就会订阅computed watcher)
+        也就是说一旦computed依赖的值发生了变化以后就会触发computedWatcher的update
+      */
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -239,6 +247,7 @@ export default class Watcher {
    * This only gets called for lazy watchers.
    */
   evaluate () {
+    // 18-1-21 调用get(), 这时候才能真正访问到computed watcher的getter
     this.value = this.get()
     this.dirty = false
   }
@@ -249,6 +258,7 @@ export default class Watcher {
   depend () {
     let i = this.deps.length
     while (i--) {
+      // 18-1-30 依赖手机选人watcher
       this.deps[i].depend()
     }
   }

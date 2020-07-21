@@ -127,5 +127,6 @@ export function nextTick (cb?: Function, ctx?: Object) {
    16-3-1 nextTick 整个实现并不难，实际上就是把所有要执行的函数收集起来，到callback数组中，再在下一个tick中把收集完的数组进行遍历，然后执行每个回调。
 
    数据改变后触发渲染watcher的update，但是watchers的flush是在nextTick后，所以重新渲染是异步的
+   
  * 
  */
