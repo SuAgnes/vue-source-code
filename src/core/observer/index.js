@@ -181,11 +181,13 @@ export function defineReactive (
     enumerable: true,
     configurable: true,
     // 14-1-25 访问时会触发get 主要做一些依赖收集
+    // 18-4-4 因为一旦触发getter 就会收集依赖，一旦修改就会通知watcher做update
     get: function reactiveGetter () {
       // 15-1-1 首先拿到getter 如果没有getter就直接取val
       const value = getter ? getter.call(obj) : val
-      // 15-1-2 依赖手机
-      if (Dep.target) {
+      // 15-1-2 依赖收集
+      // 18-3-8 此时dep里是没有subs的，watch在创建过程中药收集依赖，收集依赖就是为了订阅变化， 所以执行getter过程中就是去收集依赖，把userwatcher去定义dep
+      if (De p.target) {
         // 15-1-3 Dep是一个类 主要建立数据和watcher的桥梁
         dep.depend()
         /* 17-1-13 如果有childOb 就调用 childOb.dep.depend() 去收集依赖 其实就是订阅了渲染watcher

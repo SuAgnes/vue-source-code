@@ -68,6 +68,7 @@ export function initState (vm: Component) {
   }
   // 18-1-1 computed初始化
   if (opts.computed) initComputed(vm, opts.computed)
+  // 18-2-1 判断是否定义watch属性
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -331,6 +332,7 @@ function initMethods (vm: Component, methods: Object) {
 
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
+    // 18-2-2 拿到每个handler handler可以是数组、对象或函数，如果是数组就遍历调用，不是数组直接调用
     const handler = watch[key]
     if (Array.isArray(handler)) {
       for (let i = 0; i < handler.length; i++) {
@@ -347,14 +349,17 @@ function createWatcher (
   expOrFn: string | Function,
   handler: any,
   options?: Object
-) {
+  ) {
+    // 18-2-3 如果handler是对象，就取对象中的handler属性
   if (isPlainObject(handler)) {
     options = handler
     handler = handler.handler
   }
   if (typeof handler === 'string') {
+    // 18-2-4 如果是字符串 就取vm[handler]
     handler = vm[handler]
   }
+  // 18-2-5 第二个参数是回调函数 可以watch expOrFn 也就是说createWatcher就是把数据转换成期望类型，然后调用$watch, $watch才是真正创建 user watcher 的
   return vm.$watch(expOrFn, handler, options)
 }
 
@@ -384,18 +389,23 @@ export function stateMixin (Vue: Class<Component>) {
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+  // 18-2-6 $watch 同样挂载到原型上 用户可以直接通过$watch去watch一个数据的变化， 与组件上编写watch属性执行逻辑相同
   Vue.prototype.$watch = function (
-    expOrFn: string | Function,
+    expOrFn: string | Function, // 字符串的话会是user-watch的 名字
     cb: any,
     options?: Object
   ): Function {
     const vm: Component = this
+    // 18-2-7 如果cb是对象（直接通过$watch，传入的就是对象），会再次通过 createWatcher 把cb变成函数
     if (isPlainObject(cb)) {
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
+    // 18-2-8 user = true 证明是一个user-watcher
     options.user = true
+    // 18-2-9 执行new Watcher
     const watcher = new Watcher(vm, expOrFn, cb, options)
+    // 18-2-10 如果配置了immediate就立即执行1次
     if (options.immediate) {
       try {
         cb.call(vm, watcher.value)
@@ -403,6 +413,7 @@ export function stateMixin (Vue: Class<Component>) {
         handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)
       }
     }
+    // 18-2-11 返回了这个函数，这个函数执行的时候会销毁watcher
     return function unwatchFn () {
       watcher.teardown()
     }

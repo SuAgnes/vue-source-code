@@ -61,6 +61,7 @@ export default class Watcher {
     // 18-1-13 computedWatcher也会push到这里
     vm._watchers.push(this)
     // options
+    // 18-2-12 与渲染watcher与computed  watcher不同的是可以配置很多options
     if (options) {
       this.deep = !!options.deep
       this.user = !!options.user
@@ -86,11 +87,16 @@ export default class Watcher {
     // parse expression for getter
     // 4-5-4 判断expOrFn如果是函数，如果是就把watcher的getter赋值给这个函数
     if (typeof expOrFn === 'function') {
+    // 18-3-2 user-watcher时，expOrFn是个字符串，render-watcher 或computed watcher 都是函数
     // 15-1-11 对应updateComponent
       this.getter = expOrFn
       // 18-1-17 对应赋值给watcher的this.getter
     } else {
       // 4-5-5 否则调用parsePath转化一下expOrFn
+
+      // 18-2-13 我们通常watch的是一个字符串 那么就要执行parsePath
+
+      // 18-3-3 调用parsePath的时机
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -103,6 +109,8 @@ export default class Watcher {
       }
     }
     // 18-1-18 如果lazy = true， this.value 为空 computed创建过程中并不会求值，到此处就结束了
+    // 18-2-16 因为是user watcher，this.lazy肯定是false, 所以会在new Watcher时对watch做一次求值
+    // 18-3-4 在new watcher最后会执行get()
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -114,6 +122,8 @@ export default class Watcher {
   // 15-1-12 用ger对watcher做求值
   get () {
     // 15-1-14 在执行getter前 会通过pushTarget把当前的渲染wathcer作为当前计算中的wathcer
+    // 18-2-17 此时的pushTarget是把user watcher push到Dep.target中
+    // 18-3-4 注意 18-2-17 因为之后一些计算会访问到里面的一些数据，做依赖收集的时候会收集到user watcher中 user watcher去定义依赖的变化   
     pushTarget(this) 
     let value
     const vm = this.vm
@@ -124,6 +134,8 @@ export default class Watcher {
       /* 18-1-22 也就是说会调用get方法去求值，求值过程中就会触发getter( 因为computed会依赖一些data 或者另外的computed，所以在求值过程中，触发别的值的getter就会收集依赖，就会订阅computed watcher)
         也就是说一旦computed依赖的值发生了变化以后就会触发computedWatcher的update
       */
+      //  18-2-18 然后在getter过程中，访问的任何定义的数据，依赖收集都会收集到user-watcher中，也就是说user-watch定义了数据的变化，因为call的时候把vue实例当作了参数传入，所以在求值就会访问到vm.xx/this.xx
+      // 18-3-5 然后执行parsePath返回的方法  
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -137,6 +149,7 @@ export default class Watcher {
       if (this.deep) {
         // 15-1-19 dep-watcher逻辑
         traverse(value)
+        // 18-4-5 一旦执行完traverse。就相当于把深层属性都访问到，这样就会触发getter，就会收集依赖，一旦做修改的时候，就会触发依赖做更新
       }
       // 15-1-20 渲染watcher执行完后回popTarget 来恢复上一次正在计算的target
       popTarget()
@@ -282,3 +295,20 @@ export default class Watcher {
     }
   }
 }
+
+
+/* 18-3-1 如果在watch里配置了sync: true, 这个回调就会优先执行，因为默认的user-watcher都是异步的，（nextTick会执行）
+  但是如果配置了sync的话，在数据改变时，就会同步执行回调, 所以会先执行
+*/
+
+// 18-4-6 其实创建watcher的过程其实就是new watcher，其次就是在new watcher过程中收集依赖，目的就是数据做变更的时候，可以触发回调执行，触发整个watcher的update重新求值 
+
+/* 
+  18-5-1: 总结
+
+  1.计算属性本质是computed watcher
+  2.侦听属性本质是user watcher，它还支持deep sync immediate等配置
+  3.计算属性适合用在模板渲染中，某个值依赖了其他响应式对象 or 计算属性而来，并且计算属性不适合耦合太多逻辑
+    而侦听属性适用于观察某个值的变化去完成复杂的业务，配置也更加灵活
+
+*/
