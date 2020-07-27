@@ -57,7 +57,7 @@ const componentVNodeHooks = {
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
-
+  // 19-2-4 prepatch方法最终执行updateChildComponent
   prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {
     const options = vnode.componentOptions
     const child = vnode.componentInstance = oldVnode.componentInstance
@@ -298,3 +298,11 @@ function transformModel (options, data: any) {
     on[event] = callback
   }
 }
+
+
+/*
+  19-3-1 为什么父组件更新数据 子组件props能实时响应变化呢
+  原理就是执行updateChildComponent时，当父props更新后，会在patchVnode过程中对组件vnode执行prePatch钩子
+  prePatch执行时就会执行updateChildComponent，在updateChildComponent过程中就会拿到新的props, 新的props赋值给之前的子组件的props
+  所以在赋值语句执行的过程中，就更新了子组件的props，所以会触发setter，紧接着触发子组件的渲染watcher的update
+ */

@@ -68,6 +68,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // 7-1-1 这些变量都是数据更新时用的，update首次渲染会调用，把vnode映射成dom，还有就是当改变数据的时候，数据改变也会驱动视图，也会调update
     const vm: Component = this
     const prevEl = vm.$el
+    // 19-1-2 再次执行的时候，prevVnode就会有值
     const prevVnode = vm._vnode
   // 9-1-10 activeInstance 赋值 是在调用_update的时候，通过setActiveInstance赋值
     const restoreActiveInstance = setActiveInstance(vm)
@@ -80,6 +81,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
       这样的话，activeInstance和prevActiveInstance就是一个父子的关系。  
      */
 
+    // 19-1-1 在第一次_update时，会把渲染vnode保留到_vnode中
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
@@ -90,6 +92,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      // 19-1-3 所以更新组件的时候回执行到这里，用vm.__patch__做更新
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -271,6 +274,7 @@ export function mountComponent (
   return vm
 }
 
+// 19-2-5 在我们对组件做更新的时候 肯定也要对props等做更新，这就是这个函数的作用，对子component做更新
 export function updateChildComponent (
   vm: Component,
   propsData: ?Object,
