@@ -305,38 +305,52 @@ export function validateComponentName (name: string) {
  * Ensure all props option syntax are normalized into the
  * Object-based format.
  */
+// 20-1-2 把任何形式的props 都会规范成对象形式
 function normalizeProps (options: Object, vm: ?Component) {
+  // 20-1-3 我们在数组中定义的props 没有props直接return
   const props = options.props
   if (!props) return
+  // 20-1-4 定义返回的对象
   const res = {}
   let i, val, name
+  // 20-1-5 如果是一个数组就遍历数组
   if (Array.isArray(props)) {
     i = props.length
     while (i--) {
       val = props[i]
+      // 20-1-6 数组元素是否是字符串
       if (typeof val === 'string') {
+        // 20-1-7 如果是字符串就统一驼峰化处理
         name = camelize(val)
+        // 20-1-8 name作为对象的key，值为null，因为数组形式没法指定porps类型
         res[name] = { type: null }
       } else if (process.env.NODE_ENV !== 'production') {
+        // 20-1-9 不是字符串就报警告说数组格式的props 必须每个元素都是字符串
         warn('props must be strings when using array syntax.')
       }
     }
+    // 20-1-10 判断props是对象就遍历对象 拿到每个porp
   } else if (isPlainObject(props)) {
     for (const key in props) {
       val = props[key]
+      // 20-1-11 key 对应prop 的 key，value对应后面的值，key也会做一次驼峰化处理
       name = camelize(key)
+      // 20-1-12 如果是对象格式就直接赋值，不然就把值作为type类型，例如 props: { age: Number }, 变成{ type: Number }
       res[name] = isPlainObject(val)
         ? val
         : { type: val }
     }
   } else if (process.env.NODE_ENV !== 'production') {
+    // 20-1-13 既不是数组也不是对象就会报一个props 不合法的警告
     warn(
       `Invalid value for option "props": expected an Array or an Object, ` +
       `but got ${toRawType(props)}.`,
       vm
     )
   }
+  // 20-1-14  会返回一个对象，对象每个值都是对象
   options.props = res
+  // 20-1-15 这个函数相当于做了一次规范化，为的就是使用更灵活
 }
 
 /**
@@ -410,7 +424,7 @@ export function mergeOptions (
   if (typeof child === 'function') {
     child = child.options
   }
-
+  // 20-1-1 props 的 normalize 传入组件对象与组件实例
   normalizeProps(child, vm)
   normalizeInject(child, vm)
   normalizeDirectives(child)

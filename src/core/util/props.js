@@ -18,18 +18,25 @@ type PropOptions = {
   validator: ?Function
 };
 
+// 20-2-6 对prop做校验与求值
 export function validateProp (
   key: string,
   propOptions: Object,
   propsData: Object,
   vm?: Component
 ): any {
+  // 20-2-10 拿到每个prop定义
   const prop = propOptions[key]
+  // 20-2-11 是否传对应key值
   const absent = !hasOwn(propsData, key)
+  // 20-2-12 value 拿到prop对象对应的值
   let value = propsData[key]
   // boolean casting
+  // 20-2-7 对Boolean类型的prop做处理
+  // 20-2-19 比对2个type，就是获取prop.type是不是Boolean类型
   const booleanIndex = getTypeIndex(Boolean, prop.type)
   if (booleanIndex > -1) {
+    // 20-1-20 > -1 证明是Boolean类型
     if (absent && !hasOwn(prop, 'default')) {
       value = false
     } else if (value === '' || value === hyphenate(key)) {
@@ -42,6 +49,7 @@ export function validateProp (
     }
   }
   // check default value
+  // 20-2-8 对默认值做处理
   if (value === undefined) {
     value = getPropDefaultValue(vm, prop, key)
     // since the default value is a fresh copy,
@@ -56,6 +64,7 @@ export function validateProp (
     // skip validation for weex recycle-list child component props
     !(__WEEX__ && isObject(value) && ('@binding' in value))
   ) {
+    // 20-2-9 对prop做断言
     assertProp(prop, key, value, vm, absent)
   }
   return value
@@ -180,23 +189,27 @@ function assertType (value: any, type: Function): {
  * across different vms / iframes.
  */
 function getType (fn) {
+  // 20-1-18 用字符串比对形式，不直接用全等是因为在不同的iframes是有问题的，所以用字符串形式
   const match = fn && fn.toString().match(/^\s*function (\w+)/)
   return match ? match[1] : ''
 }
-
+// 20-1-17 isSameType 调用 getType，其实就是字符串比对
 function isSameType (a, b) {
   return getType(a) === getType(b)
 }
 
 function getTypeIndex (type, expectedTypes): number {
+  // 20-2-14 首先对expectedTypes做判断 props: { nickName: [Boolean,  String], name: String } 可数组可单个
   if (!Array.isArray(expectedTypes)) {
     return isSameType(expectedTypes, type) ? 0 : -1
   }
+  // 20-2-15 如果是数组就遍历数组
   for (let i = 0, len = expectedTypes.length; i < len; i++) {
     if (isSameType(expectedTypes[i], type)) {
       return i
     }
   }
+  // 20-1-16 getTypeIndex 返回数字类型，如果单个值索引相同就返回0，如果不同返回-1
   return -1
 }
 

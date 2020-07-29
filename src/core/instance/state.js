@@ -59,6 +59,7 @@ export function initState (vm: Component) {
     判断methods，如果定义了methods，就会初始化methods
     判断data，如果定义了data，就会初始化data
    */
+  // 20-2-1 props 初始化
   if (opts.props) initProps(vm, opts.props)
   if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
@@ -73,21 +74,27 @@ export function initState (vm: Component) {
     initWatch(vm, opts.watch)
   }
 }
- 
 function initProps (vm: Component, propsOptions: Object) {
+  // 20-2-2 三个阶段，1对每个prop校验、求值。2. 对求值后的prop做响应式，3.对prop做一层proxy代理
   const propsData = vm.$options.propsData || {}
+  // 20-2-3 存储子组件计算后value的值
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
   const keys = vm.$options._propKeys = []
+  // 20-2-4 用在props更新时使用
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
     // 14-1-10 非root 设为false
     toggleObserving(false)
   }
+  
   for (const key in propsOptions) {
     keys.push(key)
+    /* 20-2-5 遍历传入的propsOptions 然后使用validateProps, 参数：props对应的key，2. propsOptions 规范化的prop配置
+      propsData 父组件传给子组件的prop数据，vm是组件实例
+    */
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
